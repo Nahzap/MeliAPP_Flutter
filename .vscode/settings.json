@@ -1,0 +1,16 @@
+{
+  "dart.flutterSdkPath": "D:\\Flutter\\flutter\\bin",
+  "dart.debugExternalPackageLibraries": false,
+  "dart.debugSdkLibraries": false,
+  "dart.previewFlutterUiGuides": true,
+  "dart.previewFlutterUiGuidesCustomTracking": true,
+  "dart.flutterOutline": true,
+  "dart.closingLabels": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+  "files.associations": {
+    "*.dart": "dart"
+  }
+}
