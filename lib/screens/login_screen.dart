@@ -53,7 +53,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       // Botón login
                       _buildLoginButton(authProvider),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
+
+                      // Link de recuperación de contraseña
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/forgot-password');
+                        },
+                        child: const Text('¿Olvidaste tu contraseña?'),
+                      ),
+                      const SizedBox(height: 8),
 
                       // Botón de registro
                       _buildRegisterButton(),
@@ -82,16 +91,20 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       children: [
         Container(
-          width: 80,
-          height: 80,
+          width: 100,
+          height: 100,
           decoration: BoxDecoration(
-            color: Colors.blue[600],
+            color: Theme.of(context).colorScheme.primary,
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Icon(
-            Icons.qr_code_scanner,
-            color: Colors.white,
-            size: 40,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Image.asset(
+              'MeliAPP_icons/colmena.png',
+              width: 240,
+              height: 240,
+              color: Colors.white,
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -177,12 +190,9 @@ class _LoginScreenState extends State<LoginScreen> {
       child: ElevatedButton(
         onPressed: authProvider.isLoading ? null : _handleLogin,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue[600],
-          foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          elevation: 2,
         ),
         child: authProvider.isLoading
             ? const SizedBox(
@@ -209,8 +219,11 @@ class _LoginScreenState extends State<LoginScreen> {
           Navigator.pushNamed(context, '/register');
         },
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.blue[700],
-          side: BorderSide(color: Colors.blue[600]!, width: 1.5),
+          foregroundColor: Theme.of(context).colorScheme.primary,
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.primary,
+            width: 1.5,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -218,14 +231,18 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.person_add, size: 20, color: Colors.blue[700]),
+            Icon(
+              Icons.person_add,
+              size: 20,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(width: 8),
             Text(
               '¿No tienes cuenta? Regístrate',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: Colors.blue[700],
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ],
@@ -261,21 +278,25 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue[50],
+        color: const Color(0xFFFEF3C7), // amber-50
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue[200]!),
+        border: Border.all(color: const Color(0xFFFDE68A)), // amber-200
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.info_outline, color: Colors.blue[600], size: 20),
+              Icon(
+                Icons.info_outline,
+                color: Theme.of(context).colorScheme.primary,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Información de Conexión',
                 style: TextStyle(
-                  color: Colors.blue[700],
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -283,12 +304,18 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Conectando a: meli-app-v3.vercel.app',
-            style: TextStyle(color: Colors.blue[600], fontSize: 12),
+            'Conectando a: meli-app-cloud.vercel.app',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.primary,
+              fontSize: 12,
+            ),
           ),
           Text(
             'API REST con autenticación Flask + Supabase',
-            style: TextStyle(color: Colors.blue[600], fontSize: 12),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.primary,
+              fontSize: 12,
+            ),
           ),
         ],
       ),

@@ -28,8 +28,6 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Escanear QR'),
-        backgroundColor: Colors.blue[600],
-        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.flash_on),
@@ -142,13 +140,13 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     try {
       // PRIMERO: Verificar si es una URL
       if (_isValidUrl(qrData)) {
-        print('[QR] URL detectada: $qrData');
+        debugPrint('[QR] URL detectada: $qrData');
         await _openUrlInBrowser(qrData);
         return;
       }
 
       // SEGUNDO: Si no es URL, intentar procesar como QR del sistema MeliAPP
-      print('[QR] No es URL, procesando como QR de MeliAPP...');
+      debugPrint('[QR] No es URL, procesando como QR de MeliAPP...');
       final userInfo = await _qrService.getUserInfoFromQR(qrData);
 
       if (userInfo != null && mounted) {
@@ -206,32 +204,30 @@ $qrData
   Future<void> _openUrlInBrowser(String url) async {
     try {
       final uri = Uri.parse(url);
-      print('[QR] Intentando abrir URL en navegador: $url');
+      debugPrint('[QR] Intentando abrir URL en navegador: $url');
       
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication, // Abre en navegador externo
-        );
-        
+      // Intentar lanzar la URL directamente
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication, // Abre en navegador externo
+      );
+      
+      if (launched) {
+        debugPrint('[QR] ✅ URL abierta exitosamente en navegador');
         if (mounted) {
-          // Mostrar confirmación y cerrar scanner
-          _showResultDialog(
-            title: '🌐 URL Abierta',
-            content: 'La URL ha sido abierta en tu navegador:\n\n$url',
-            isSuccess: true,
-            closeAfterConfirm: true,
-          );
+          // Cerrar el scanner directamente sin mostrar diálogo
+          // El usuario ya está viendo el navegador
+          Navigator.of(context).pop();
         }
       } else {
-        throw 'No se puede abrir la URL: $url';
+        throw 'No se pudo lanzar la URL';
       }
     } catch (e) {
-      print('[QR] Error abriendo URL: $e');
+      debugPrint('[QR] ❌ Error abriendo URL: $e');
       if (mounted) {
         _showResultDialog(
           title: '❌ Error',
-          content: 'No se pudo abrir la URL en el navegador:\n\n$e',
+          content: 'No se pudo abrir la URL en el navegador:\n\nNo se puede abrir la URL: $url',
           isSuccess: false,
         );
       }

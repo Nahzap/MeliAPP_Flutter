@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../models/qr_response.dart';
 import 'api_service.dart';
 
@@ -15,7 +16,7 @@ class QRService {
   Future<QRResponse?> generateUserQR(String uuidSegment) async {
     try {
       if (uuidSegment.length != 8) {
-        print('[QR] UUID segment debe tener 8 caracteres: $uuidSegment');
+        debugPrint('[QR] UUID segment debe tener 8 caracteres: $uuidSegment');
         return QRResponse(
           success: false,
           error: 'UUID segment debe tener 8 caracteres',
@@ -26,14 +27,14 @@ class QRService {
       final qrResponse = QRResponse.fromJson(responseData);
       
       if (qrResponse.success) {
-        print('[QR] QR generado exitosamente para: $uuidSegment');
+        debugPrint('[QR] QR generado exitosamente para: $uuidSegment');
       } else {
-        print('[QR] Error generando QR: ${qrResponse.error}');
+        debugPrint('[QR] Error generando QR: ${qrResponse.error}');
       }
       
       return qrResponse;
     } catch (e) {
-      print('[QR] Error en generateUserQR: $e');
+      debugPrint('[QR] Error en generateUserQR: $e');
       return QRResponse(
         success: false,
         error: 'Error de conexión: ${e.toString()}',
@@ -42,19 +43,19 @@ class QRService {
   }
 
   /// Extrae el UUID segment de una URL de QR escaneada
-  /// Ejemplo: https://meli-app-v3.vercel.app/api/usuario/550e8400 -> 550e8400
+  /// Ejemplo: https://meli-app-cloud.vercel.app/api/usuario/550e8400 -> 550e8400
   String? extractUuidFromQR(String qrData) {
     try {
       final uri = Uri.tryParse(qrData);
       
       if (uri == null) {
-        print('[QR] QR data no es una URL válida: $qrData');
+        debugPrint('[QR] QR data no es una URL válida: $qrData');
         return null;
       }
 
       // Verificar que sea de nuestro dominio
-      if (!uri.host.contains('meli-app-v3.vercel.app')) {
-        print('[QR] QR no es de nuestro dominio: ${uri.host}');
+      if (!uri.host.contains('meli-app-cloud.vercel.app')) {
+        debugPrint('[QR] QR no es de nuestro dominio: ${uri.host}');
         return null;
       }
 
@@ -69,18 +70,18 @@ class QRService {
         final uuidSegment = pathSegments[2];
         
         if (uuidSegment.length == 8) {
-          print('[QR] UUID segment extraído: $uuidSegment');
+          debugPrint('[QR] UUID segment extraído: $uuidSegment');
           return uuidSegment;
         } else {
-          print('[QR] UUID segment no tiene 8 caracteres: $uuidSegment');
+          debugPrint('[QR] UUID segment no tiene 8 caracteres: $uuidSegment');
         }
       } else {
-        print('[QR] Formato de URL no válido: ${uri.path}');
+        debugPrint('[QR] Formato de URL no válido: ${uri.path}');
       }
       
       return null;
     } catch (e) {
-      print('[QR] Error extrayendo UUID: $e');
+      debugPrint('[QR] Error extrayendo UUID: $e');
       return null;
     }
   }
@@ -96,7 +97,7 @@ class QRService {
 
   /// Construye la URL completa para un UUID segment
   String buildUserUrl(String uuidSegment) {
-    return 'https://meli-app-v3.vercel.app/api/usuario/$uuidSegment';
+    return 'https://meli-app-cloud.vercel.app/api/usuario/$uuidSegment';
   }
 
   /// Obtiene información de usuario a partir de un UUID segment escaneado
@@ -119,7 +120,7 @@ class QRService {
         'scanned_at': DateTime.now().toIso8601String(),
       };
     } catch (e) {
-      print('[QR] Error obteniendo info de usuario: $e');
+      debugPrint('[QR] Error obteniendo info de usuario: $e');
       return null;
     }
   }

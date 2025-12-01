@@ -1,7 +1,7 @@
 /// Configuración centralizada para la comunicación con la API REST
 class ApiConfig {
   // URL base de tu API REST en Vercel
-  static const String baseUrl = 'https://meli-app-v3.vercel.app';
+  static const String baseUrl = 'https://meli-app-cloud.vercel.app';
   
   // Endpoints de autenticación
   static const String loginEndpoint = '/api/auth/login';

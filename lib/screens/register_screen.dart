@@ -78,8 +78,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Crear Cuenta'),
-        backgroundColor: Colors.blue[700],
-        elevation: 0,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -95,7 +93,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Icon(
                   Icons.person_add_rounded,
                   size: 80,
-                  color: Colors.blue[700],
+                  color: Theme.of(context).colorScheme.primary,
                 ),
 
                 const SizedBox(height: 30),
@@ -106,7 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.blue[900],
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -289,12 +287,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ElevatedButton(
                   onPressed: _isLoading ? null : _handleRegister,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[700],
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    elevation: 2,
                   ),
                   child: _isLoading
                       ? const SizedBox(
@@ -324,7 +320,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                   child: Text(
                     '¿Ya tienes cuenta? Inicia sesión',
-                    style: TextStyle(color: Colors.blue[700], fontSize: 14),
+                    style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 14),
                   ),
                 ),
 

@@ -4,7 +4,12 @@ import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/forgot_password_screen.dart';
+import 'screens/search_screen.dart';
+import 'screens/lotes/lotes_list_screen.dart';
+import 'screens/lotes/lote_detail_screen.dart';
 import 'services/api_service.dart';
+import 'config/theme_config.dart';
 
 void main() {
   // Inicializar servicios antes de ejecutar la app
@@ -21,36 +26,50 @@ class MeliApp extends StatelessWidget {
     return MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
       child: MaterialApp(
-        title: 'MeliAPP Flutter',
+        title: 'MeliAPP Cloud',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-          appBarTheme: AppBarTheme(
-            backgroundColor: Colors.blue[600],
-            foregroundColor: Colors.white,
-            elevation: 2,
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-          cardTheme: CardThemeData(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        ),
+        theme: AppTheme.lightTheme,
         home: const AuthWrapper(),
-        routes: {
-          '/login': (context) => const LoginScreen(),
-          '/register': (context) => const RegisterScreen(),
-          '/home': (context) => const HomeScreen(),
+        onGenerateRoute: (settings) {
+          // Rutas con parámetros
+          if (settings.name == '/lotes/detail') {
+            final loteId = settings.arguments as String;
+            return MaterialPageRoute(
+              builder: (context) => LoteDetailScreen(loteId: loteId),
+            );
+          }
+
+          // Ruta de lotes con userId opcional
+          if (settings.name == '/lotes' || settings.name == '/lotes/list') {
+            final userId = settings.arguments as String?;
+            return MaterialPageRoute(
+              builder: (context) => LotesListScreen(userId: userId),
+            );
+          }
+
+          // Rutas simples
+          Widget page;
+          switch (settings.name) {
+            case '/login':
+              page = const LoginScreen();
+              break;
+            case '/register':
+              page = const RegisterScreen();
+              break;
+            case '/home':
+              page = const HomeScreen();
+              break;
+            case '/forgot-password':
+              page = const ForgotPasswordScreen();
+              break;
+            case '/search':
+              page = const SearchScreen();
+              break;
+            default:
+              page = const LoginScreen();
+          }
+
+          return MaterialPageRoute(builder: (context) => page);
         },
       ),
     );
@@ -100,29 +119,35 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue[600],
-      body: const Center(
+      backgroundColor: AppTheme.primary,
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo
-            Icon(Icons.qr_code_scanner, color: Colors.white, size: 80),
-            SizedBox(height: 24),
+            // Logo Colmena
+            Image.asset(
+              'MeliAPP_icons/colmena.png',
+              width: 240,
+              height: 240,
+              color: Colors.white,
+            ),
+            const SizedBox(height: 24),
 
             // Título
-            Text(
+            const Text(
               'MeliAPP',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 32,
+                fontSize: 36,
                 fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
               ),
             ),
             SizedBox(height: 8),
 
             // Subtítulo
             Text(
-              'Conectando con API REST...',
+              'APP de Gestión Apícola',
               style: TextStyle(color: Colors.white70, fontSize: 16),
             ),
             SizedBox(height: 32),

@@ -98,7 +98,7 @@ Antes de comenzar, asegúrate de tener instalado:
 
 - **Git**: Para clonar el repositorio
 
-- **Backend API**: MeliAPP_v2 corriendo en `https://meli-app-v3.vercel.app`
+- **Backend API**: MeliAPP_v2 corriendo en `https://meli-app-cloud.vercel.app`
 
 ---
 
@@ -152,7 +152,7 @@ La URL del backend se configura en `lib/config/api_config.dart`:
 
 ```dart
 class ApiConfig {
-  static const String baseUrl = 'https://meli-app-v3.vercel.app';
+  static const String baseUrl = 'https://meli-app-cloud.vercel.app';
   
   // Endpoints
   static const String loginEndpoint = '/api/auth/login';
@@ -350,7 +350,7 @@ La aplicación muestra **15 campos completos** del usuario combinando datos de l
 
 El backend está desarrollado en Flask y Supabase:
 - **Repositorio**: [MeliAPP_v2](https://github.com/Nahzap/Meli_APP_v3)
-- **Deploy**: Vercel (`https://meli-app-v3.vercel.app`)
+- **Deploy**: Vercel (`https://meli-app-cloud.vercel.app`)
 - **Base de Datos**: Supabase PostgreSQL
 
 ---

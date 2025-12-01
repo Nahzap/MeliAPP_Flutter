@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 import '../models/auth_response.dart';
 import '../models/session_response.dart';
 import '../models/user_model.dart';
@@ -24,11 +25,11 @@ class AuthService {
 
       if (authResponse.success) {
         await _saveLoginState(true);
-        print('[AUTH] Login exitoso para: $email');
+        debugPrint('[AUTH] Login exitoso para: $email');
 
         // Intentar obtener datos REALES del usuario desde el servidor
         try {
-          print('[AUTH] Obteniendo datos reales del usuario desde /api/user/current...');
+          debugPrint('[AUTH] Obteniendo datos reales del usuario desde /api/user/current...');
           final currentUserResponse = await _apiService.getCurrentUser();
 
           if (currentUserResponse['success'] == true && currentUserResponse['user'] != null) {
@@ -54,14 +55,14 @@ class AuthService {
             );
 
             await _saveUserData(realUser);
-            print('[AUTH] Datos REALES del usuario obtenidos desde Supabase');
-            print('[AUTH] Usuario: ${realUser.username}, Role: ${realUser.role}, Tipo: ${realUser.tipoUsuario}');
+            debugPrint('[AUTH] Datos REALES del usuario obtenidos desde Supabase');
+            debugPrint('[AUTH] Usuario: ${realUser.username}, Role: ${realUser.role}, Tipo: ${realUser.tipoUsuario}');
           } else {
             throw Exception('No se pudieron obtener datos del usuario');
           }
         } catch (userError) {
-          print('[AUTH] No se pudieron obtener datos reales: $userError');
-          print('[AUTH] Usando datos temporales como fallback');
+          debugPrint('[AUTH] No se pudieron obtener datos reales: $userError');
+          debugPrint('[AUTH] Usando datos temporales como fallback');
 
           // Fallback: crear usuario con datos temporales
           final fallbackUser = User(
@@ -73,12 +74,12 @@ class AuthService {
           await _saveUserData(fallbackUser);
         }
       } else {
-        print('[AUTH] Login fallido: ${authResponse.error}');
+        debugPrint('[AUTH] Login fallido: ${authResponse.error}');
       }
 
       return authResponse;
     } catch (e) {
-      print('[AUTH] Error en login: $e');
+      debugPrint('[AUTH] Error en login: $e');
       return AuthResponse(
         success: false,
         error: 'Error de conexión: ${e.toString()}',
@@ -98,26 +99,26 @@ class AuthService {
           sessionResponse.user != null) {
         await _saveUserData(sessionResponse.user!);
         await _saveLoginState(true);
-        print(
+        debugPrint(
           '[AUTH] Sesión válida para usuario: ${sessionResponse.user!.username}',
         );
       } else {
         await _saveLoginState(false);
         await _clearUserData();
-        print('[AUTH] No hay sesión activa');
+        debugPrint('[AUTH] No hay sesión activa');
       }
 
       return sessionResponse;
     } catch (e) {
-      print('[AUTH] Error verificando sesión: $e');
+      debugPrint('[AUTH] Error verificando sesión: $e');
 
       // WORKAROUND: Si el error es por columna 'id' no existe,
       // crear una sesión simulada con datos del login exitoso
       final errorString = e.toString();
       if (errorString.contains('column usuarios.id does not exist') ||
           errorString.contains('42703')) {
-        print('[AUTH] WORKAROUND: Detectado error de columna usuarios.id');
-        print('[AUTH] Creando sesión simulada basada en login exitoso');
+        debugPrint('[AUTH] WORKAROUND: Detectado error de columna usuarios.id');
+        debugPrint('[AUTH] Creando sesión simulada basada en login exitoso');
 
         // Crear usuario simulado con datos básicos
         final simulatedUser = User(
@@ -142,13 +143,20 @@ class AuthService {
   }
 
   /// Registrar nuevo usuario
+  /// IMPORTANTE: El registro NO crea sesión automáticamente
+  /// El usuario debe confirmar su email antes de hacer login
   Future<Map<String, dynamic>> register({
     required String username,
     required String email,
     required String password,
   }) async {
     try {
-      print('[AUTH] Iniciando registro para: $email');
+      debugPrint('[AUTH] Iniciando registro para: $email');
+      
+      // IMPORTANTE: Limpiar cualquier sesión anterior antes de registrar
+      await _clearUserData();
+      await _saveLoginState(false);
+      _apiService.clearCookies();
       
       // Llamar al endpoint de registro
       final response = await _apiService.register(
@@ -158,62 +166,25 @@ class AuthService {
       );
       
       if (response['success'] == true) {
-        print('[AUTH] Registro exitoso. Obteniendo datos del usuario...');
+        debugPrint('[AUTH] ✅ Registro exitoso');
+        debugPrint('[AUTH] ⚠️ El usuario debe confirmar su email antes de hacer login');
         
-        // El backend ya creó la sesión, obtener datos completos
-        try {
-          final currentUserResponse = await _apiService.getCurrentUser();
-          
-          if (currentUserResponse['success'] == true && currentUserResponse['user'] != null) {
-            final userData = currentUserResponse['user'];
-            
-            // Crear usuario con datos obtenidos
-            final user = User(
-              id: userData['auth_user_id'] ?? response['auth_user_id'],
-              username: userData['username'] ?? username,
-              tipoUsuario: userData['tipo_usuario'],
-              role: userData['role'],
-              status: userData['status'],
-              activo: userData['activo'] as bool?,
-              fechaRegistro: userData['fecha_registro'] as String?,
-              lastLogin: userData['last_login'] as String?,
-              nombreCompleto: userData['nombre_completo'],
-              nombreEmpresa: userData['nombre_empresa'],
-              email: userData['correo_principal'] ?? email,
-              telefono: userData['telefono_principal'],
-              direccion: userData['direccion'],
-              comuna: userData['comuna'],
-              region: userData['region'],
-            );
-            
-            await _saveUserData(user);
-            print('[AUTH] ✅ Usuario registrado y datos guardados localmente');
-            
-            return {
-              'success': true,
-              'message': 'Registro exitoso',
-              'user': user,
-            };
-          }
-        } catch (e) {
-          print('[AUTH] Error obteniendo datos después del registro: $e');
-        }
-        
-        // Si falla obtener datos completos, aún es exitoso
+        // NO intentar obtener datos del usuario porque NO está autenticado
+        // El usuario debe confirmar email y luego hacer login
         return {
           'success': true,
-          'message': response['message'] ?? 'Registro exitoso',
-          'auth_user_id': response['auth_user_id'],
+          'message': response['message'] ?? 'Registro exitoso. Por favor confirma tu email.',
+          'requires_confirmation': true,
         };
       } else {
-        print('[AUTH] Error en registro: ${response['error']}');
+        debugPrint('[AUTH] Error en registro: ${response['error']}');
         return {
           'success': false,
           'error': response['error'] ?? 'Error al registrar usuario',
         };
       }
     } catch (e) {
-      print('[AUTH] Excepción en registro: $e');
+      debugPrint('[AUTH] Excepción en registro: $e');
       return {
         'success': false,
         'error': 'Error de conexión al registrar',
@@ -222,21 +193,41 @@ class AuthService {
   }
 
   /// Cierra la sesión del usuario
+  /// Limpia TODOS los datos: cookies, SharedPreferences, estado
   Future<bool> logout() async {
     try {
-      print('[AUTH] Cerrando sesión...');
-      await _apiService.logout();
-      // Limpiar estado local aunque falle el logout en servidor
-      await _saveLoginState(false);
-      await _clearUserData();
+      debugPrint('[AUTH] 🔓 Cerrando sesión...');
+      
+      // 1. Llamar al endpoint de logout en servidor
+      try {
+        await _apiService.logout();
+        debugPrint('[AUTH] ✅ Sesión cerrada en servidor');
+      } catch (e) {
+        debugPrint('[AUTH] ⚠️ Error cerrando sesión en servidor: $e');
+        // Continuar con limpieza local de todos modos
+      }
+      
+      // 2. Limpiar TODAS las cookies
       _apiService.clearCookies();
-      return false;
+      debugPrint('[AUTH] 🍪 Cookies limpiadas');
+      
+      // 3. Limpiar TODOS los datos de SharedPreferences
+      await _clearUserData();
+      debugPrint('[AUTH] 📦 SharedPreferences limpiado');
+      
+      // 4. Marcar como no logueado
+      await _saveLoginState(false);
+      debugPrint('[AUTH] ✅ Logout completo');
+      
+      return true;
     } catch (e) {
-      print('[AUTH] Error al cerrar sesión: $e');
-      // Limpiar datos locales de todos modos
-      await _saveLoginState(false);
-      await _clearUserData();
+      debugPrint('[AUTH] ❌ Error crítico en logout: $e');
+      
+      // IMPORTANTE: Limpiar todo de todos modos
       _apiService.clearCookies();
+      await _clearUserData();
+      await _saveLoginState(false);
+      
       return false;
     }
   }
@@ -266,7 +257,7 @@ class AuthService {
 
       return null;
     } catch (e) {
-      print('[AUTH] Error obteniendo usuario cacheado: $e');
+      debugPrint('[AUTH] Error obteniendo usuario cacheado: $e');
       return null;
     }
   }
@@ -297,9 +288,9 @@ class AuthService {
       if (user.direccion != null) await prefs.setString('user_direccion', user.direccion!);
       if (user.comuna != null) await prefs.setString('user_comuna', user.comuna!);
       if (user.region != null) await prefs.setString('user_region', user.region!);
-      print('[AUTH] Datos de usuario guardados localmente');
+      debugPrint('[AUTH] Datos de usuario guardados localmente');
     } catch (e) {
-      print('[AUTH] Error guardando datos de usuario: $e');
+      debugPrint('[AUTH] Error guardando datos de usuario: $e');
     }
   }
 
@@ -323,9 +314,9 @@ class AuthService {
       await prefs.remove('user_direccion');
       await prefs.remove('user_comuna');
       await prefs.remove('user_region');
-      print('[AUTH] Datos de usuario limpiados');
+      debugPrint('[AUTH] Datos de usuario limpiados');
     } catch (e) {
-      print('[AUTH] Error limpiando datos de usuario: $e');
+      debugPrint('[AUTH] Error limpiando datos de usuario: $e');
     }
   }
 
@@ -351,7 +342,7 @@ class AuthService {
         'region': prefs.getString('user_region'),
       };
     } catch (e) {
-      print('[AUTH] Error obteniendo datos básicos: $e');
+      debugPrint('[AUTH] Error obteniendo datos básicos: $e');
       return {};
     }
   }

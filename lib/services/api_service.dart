@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:cookie_jar/cookie_jar.dart';
+import 'package:flutter/foundation.dart';
 import '../config/api_config.dart';
 
 /// Servicio principal para comunicación HTTP con la API REST
@@ -19,41 +20,47 @@ class ApiService {
     if (_initialized) return;
 
     _cookieJar = CookieJar();
-    
-    _dio = Dio(BaseOptions(
-      baseUrl: ApiConfig.baseUrl,
-      connectTimeout: ApiConfig.connectTimeout,
-      receiveTimeout: ApiConfig.receiveTimeout,
-      sendTimeout: ApiConfig.sendTimeout,
-      headers: ApiConfig.defaultHeaders,
-    ));
+
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: ApiConfig.baseUrl,
+        connectTimeout: ApiConfig.connectTimeout,
+        receiveTimeout: ApiConfig.receiveTimeout,
+        sendTimeout: ApiConfig.sendTimeout,
+        headers: ApiConfig.defaultHeaders,
+      ),
+    );
 
     // Interceptor de cookies para mantener sesión Flask
     _dio.interceptors.add(CookieManager(_cookieJar));
-    
+
     // Interceptor de logging para debug
     if (ApiConfig.enableLogging) {
-      _dio.interceptors.add(LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        requestHeader: true,
-        responseHeader: false,
-        error: true,
-        logPrint: (obj) => print('[API] $obj'),
-      ));
+      _dio.interceptors.add(
+        LogInterceptor(
+          requestBody: true,
+          responseBody: true,
+          requestHeader: true,
+          responseHeader: false,
+          error: true,
+          logPrint: (obj) => debugPrint('[API] $obj'),
+        ),
+      );
     }
 
     // Interceptor de errores
-    _dio.interceptors.add(InterceptorsWrapper(
-      onError: (error, handler) {
-        print('[API ERROR] ${error.message}');
-        if (error.response != null) {
-          print('[API ERROR] Status: ${error.response?.statusCode}');
-          print('[API ERROR] Data: ${error.response?.data}');
-        }
-        handler.next(error);
-      },
-    ));
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onError: (error, handler) {
+          debugPrint('[API ERROR] ${error.message}');
+          if (error.response != null) {
+            debugPrint('[API ERROR] Status: ${error.response?.statusCode}');
+            debugPrint('[API ERROR] Data: ${error.response?.data}');
+          }
+          handler.next(error);
+        },
+      ),
+    );
 
     _initialized = true;
   }
@@ -81,10 +88,7 @@ class ApiService {
     if (!_initialized) initialize();
 
     try {
-      final options = Options(
-        method: method,
-        headers: headers,
-      );
+      final options = Options(method: method, headers: headers);
 
       return await _dio.request<T>(
         path,
@@ -93,10 +97,10 @@ class ApiService {
         options: options,
       );
     } on DioException catch (e) {
-      print('[API] DioException: ${e.message}');
+      debugPrint('[API] DioException: ${e.message}');
       rethrow;
     } catch (e) {
-      print('[API] Unexpected error: $e');
+      debugPrint('[API] Unexpected error: $e');
       rethrow;
     }
   }
@@ -106,10 +110,7 @@ class ApiService {
     final response = await request(
       ApiConfig.loginEndpoint,
       method: 'POST',
-      data: {
-        'email': email,
-        'password': password,
-      },
+      data: {'email': email, 'password': password},
     );
     return response.data as Map<String, dynamic>;
   }
@@ -120,7 +121,7 @@ class ApiService {
       final response = await _dio.get('/api/auth/session');
       return response.data;
     } catch (e) {
-      print('[API] Error en checkSession: $e');
+      debugPrint('[API] Error en checkSession: $e');
       rethrow;
     }
   }
@@ -129,19 +130,19 @@ class ApiService {
   /// Usa el NUEVO endpoint /api/profile/me que retorna usuarios + info_contacto
   Future<Map<String, dynamic>> getCurrentUser() async {
     try {
-      print('[API] Llamando al NUEVO endpoint /api/profile/me');
+      debugPrint('[API] Llamando al NUEVO endpoint /api/profile/me');
       final response = await _dio.get('/api/profile/me');
-      print('[API] Respuesta de /api/profile/me recibida');
+      debugPrint('[API] Respuesta de /api/profile/me recibida');
       return response.data;
     } catch (e) {
-      print('[API] Error en /api/profile/me: $e');
-      print('[API] Intentando fallback a /api/user/current...');
+      debugPrint('[API] Error en /api/profile/me: $e');
+      debugPrint('[API] Intentando fallback a /api/user/current...');
       try {
         final response = await _dio.get('/api/user/current');
-        print('[API] Fallback exitoso');
+        debugPrint('[API] Fallback exitoso');
         return response.data;
       } catch (fallbackError) {
-        print('[API] Fallback también falló: $fallbackError');
+        debugPrint('[API] Fallback también falló: $fallbackError');
         rethrow;
       }
     }
@@ -154,29 +155,35 @@ class ApiService {
     required String password,
   }) async {
     try {
-      print('[API] Registrando nuevo usuario: $email');
+      debugPrint('[API] Registrando nuevo usuario: $email');
       final response = await _dio.post(
         '/api/auth/register',
-        data: {
-          'username': username,
-          'email': email,
-          'password': password,
-        },
+        data: {'username': username, 'email': email, 'password': password},
       );
-      print('[API] Registro exitoso: ${response.data}');
+      debugPrint('[API] Registro exitoso: ${response.data}');
       return response.data;
     } catch (e) {
-      print('[API] Error en registro: $e');
+      debugPrint('[API] Error en registro: $e');
+      rethrow;
+    }
+  }
+
+  /// Obtener información de un usuario por ID
+  Future<Map<String, dynamic>> getUserById(String userId) async {
+    try {
+      debugPrint('[API] Obteniendo info de usuario: $userId');
+      final response = await _dio.get('/api/profile/$userId');
+      debugPrint('[API] Info usuario obtenida');
+      return response.data;
+    } catch (e) {
+      debugPrint('[API] Error obteniendo usuario: $e');
       rethrow;
     }
   }
 
   /// Cerrar sesión
   Future<Map<String, dynamic>> logout() async {
-    final response = await request(
-      ApiConfig.logoutEndpoint,
-      method: 'POST',
-    );
+    final response = await request(ApiConfig.logoutEndpoint, method: 'POST');
     return response.data as Map<String, dynamic>;
   }
 
@@ -196,7 +203,9 @@ class ApiService {
 
   /// Verificar si hay cookies de sesión
   Future<bool> hasCookies() async {
-    final cookies = await _cookieJar.loadForRequest(Uri.parse(ApiConfig.baseUrl));
+    final cookies = await _cookieJar.loadForRequest(
+      Uri.parse(ApiConfig.baseUrl),
+    );
     return cookies.isNotEmpty;
   }
 }
