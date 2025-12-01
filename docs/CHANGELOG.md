@@ -7,6 +7,41 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [2.0.9] - 1 Diciembre 2025
+
+### 🔌 Endpoint de Consulta de Perfiles Públicos
+
+**Autor**: Rodrigo Jofré Cerda
+
+#### 🌐 Backend: Nuevo Endpoint `/api/profile/<user_id>`
+- ✅ **Consulta de información pública de usuarios**
+  - Endpoint: `GET /api/profile/{user_id}`
+  - Permite consultar datos de contacto de otros usuarios
+  - Campos: nombre completo, empresa, email, teléfono, ubicación
+  - Soporta UUID completo o segmento de 8 caracteres
+  - **Crítico para contacto entre apicultores**
+
+#### 📱 Integración Flutter Completa
+- ✅ **ApiService.getUserById()**
+  - Consume endpoint `/api/profile/{user_id}`
+  - Retorna User model completo
+  - Manejo de errores robusto
+
+- ✅ **LotesListScreen con info de usuario**
+  - Carga automática de perfil del productor
+  - Card elegante con datos de contacto
+  - Aparece sobre el gráfico polínico
+  - UX profesional y funcional
+
+#### 🔒 Seguridad y Privacidad
+- ✅ **Solo datos públicos**
+  - Nombre, empresa, ubicación
+  - Email y teléfono (necesarios para contacto comercial)
+  - NO expone datos sensibles (passwords, sesiones)
+  - Permite comunicación entre usuarios de la plataforma
+
+---
+
 ## [2.0.8] - 1 Diciembre 2025
 
 ### 🎨 Correcciones Críticas de UI/UX

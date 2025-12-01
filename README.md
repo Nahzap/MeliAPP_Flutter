@@ -2,26 +2,50 @@
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.9.2-02569B?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?logo=dart)](https://dart.dev)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS-lightgrey)](https://github.com/Nahzap/MeliAPP_Flutter)
+[![Version](https://img.shields.io/badge/Version-2.0.9--dev-orange)](https://github.com/Nahzap/MeliAPP_Flutter)
+[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Windows-lightgrey)](https://github.com/Nahzap/MeliAPP_Flutter)
 
-Aplicación móvil para la gestión y trazabilidad de productos apícolas, construida con Flutter y conectada a un backend REST API en Flask/Supabase.
+> **⚠️ VERSIÓN DE DESARROLLO**  
+> Esta aplicación está en fase de desarrollo y testing con usuarios. Algunas funcionalidades pueden estar incompletas o experimentar cambios.
+
+Aplicación móvil profesional para la gestión, trazabilidad y análisis de producción apícola. Conecta apicultores, proveedores y compradores en un ecosistema digital completo.
 
 ---
 
 ## 📱 Sobre el Proyecto
 
-**MeliAPP Flutter** es la aplicación móvil oficial del ecosistema MeliAPP, diseñada para apicultores, prestadores de servicios y consumidores. Permite gestionar perfiles de usuarios, escanear códigos QR para trazabilidad de productos, y acceder a información completa de producción apícola.
+**MeliAPP Flutter** es la aplicación móvil del ecosistema MeliAPP, diseñada para profesionalizar la gestión apícola. Facilita la conexión entre apicultores, proveedores de servicios y compradores, proporcionando herramientas para trazabilidad, análisis polínico y gestión de producción.
 
-### ✨ Características Principales
+### ✨ Características Principales v2.0.9
 
-- 🔐 **Autenticación Segura**: Login y registro con sesiones persistentes
-- 👤 **Gestión de Perfiles**: Visualización completa de datos de usuario (15+ campos)
-- 📷 **Scanner QR Avanzado**: Escaneo de QR con detección automática de URLs
-- 🌐 **Apertura de URLs**: Redirección automática al navegador desde códigos QR
-- 💾 **Almacenamiento Local**: Persistencia de sesión con SharedPreferences
-- 🎨 **UI Moderna**: Interfaz limpia y profesional con Material Design
-- 📱 **Multi-Plataforma**: Compatible con Android e iOS
+#### 🔐 Autenticación y Perfiles
+- **Login/Registro Seguro**: Sesiones persistentes con cookies
+- **Perfiles Completos**: 15+ campos de información de usuario
+- **Búsqueda de Usuarios**: Encuentra apicultores y proveedores
+- **Información de Contacto Pública**: Email, teléfono, ubicación para facilitar contacto comercial
+
+#### 🍯 Gestión de Lotes de Miel
+- **Lista de Lotes**: Visualización completa de producción
+- **Análisis Polínico**: Gráficos de composición botánica
+- **Ranking TOP 3**: Lotes con mayor producción
+- **Trazabilidad**: Información detallada por lote
+- **Iconografía Personalizada**: Diseño profesional con iconos custom
+
+#### 📊 Visualización de Datos
+- **Gráficos de Torta**: Composición polínica por especie
+- **Análisis Consolidado**: Composición total de múltiples lotes
+- **Estadísticas**: Producción total, número de lotes, especies
+
+#### 📷 Scanner QR
+- **Escaneo de Códigos**: Compatibilidad con QR y códigos de barras
+- **Detección de URLs**: Apertura automática en navegador
+- **Trazabilidad de Productos**: Información de origen
+
+#### 🎨 Experiencia de Usuario
+- **UI Moderna**: Material Design con paleta de colores amber/naranja
+- **Iconografía Custom**: Colmena, apicultor, miel, apiario
+- **Contraste Optimizado**: Campos blancos sobre fondos de color
+- **Multi-Plataforma**: Android, iOS, Windows
 
 ---
 
@@ -31,12 +55,36 @@ El proyecto sigue una arquitectura **Clean Architecture** con separación de cap
 
 ```
 lib/
-├── config/          # Configuración centralizada (API endpoints, constantes)
-├── models/          # Modelos de datos (User, AuthResponse, etc.)
-├── providers/       # Gestión de estado con Provider
-├── screens/         # Pantallas de la aplicación
-├── services/        # Lógica de negocio y comunicación con API
-└── main.dart        # Punto de entrada de la aplicación
+├── config/              # Configuración (API, theme)
+│   ├── api_config.dart
+│   └── theme_config.dart
+├── models/              # Modelos de datos
+│   ├── user_model.dart
+│   ├── lote_model.dart
+│   └── auth_response.dart
+├── providers/           # State management
+│   └── auth_provider.dart
+├── screens/             # Pantallas UI
+│   ├── login_screen.dart
+│   ├── home_screen.dart
+│   ├── search_screen.dart
+│   ├── lotes/
+│   │   ├── lotes_list_screen.dart
+│   │   └── lote_detail_screen.dart
+│   └── qr_scanner_screen.dart
+├── services/            # Lógica de negocio
+│   ├── api_service.dart
+│   └── lotes_service.dart
+├── widgets/             # Componentes reutilizables
+│   ├── lote_card.dart
+│   └── composition_pie_chart.dart
+└── main.dart            # Entry point
+
+MeliAPP_icons/           # Iconografía custom
+├── colmena.png
+├── apicultor.png
+├── honey02.png
+└── apiario01.png
 ```
 
 ### 📐 Capas de la Arquitectura
@@ -75,11 +123,12 @@ lib/
 | `dio` | ^5.4.0 | Cliente HTTP con interceptores |
 | `dio_cookie_manager` | ^3.1.1 | Gestión de cookies para sesiones |
 | `cookie_jar` | ^4.0.8 | Almacenamiento de cookies |
-| `provider` | ^6.1.1 | Gestión de estado |
-| `shared_preferences` | ^2.2.2 | Almacenamiento local persistente |
+| `provider` | ^6.1.1 | Gestión de estado (Provider pattern) |
+| `shared_preferences` | ^2.2.2 | Persistencia local (session tokens) |
 | `mobile_scanner` | ^5.1.1 | Scanner QR/códigos de barras |
-| `url_launcher` | ^6.2.4 | Apertura de URLs en navegador |
-| `json_annotation` | ^4.8.1 | Serialización JSON |
+| `url_launcher` | ^6.2.4 | Apertura de URLs externas |
+| `fl_chart` | ^0.68.0 | Gráficos y visualizaciones |
+| `intl` | ^0.19.0 | Formateo de fechas y números |
 
 ---
 
@@ -98,7 +147,9 @@ Antes de comenzar, asegúrate de tener instalado:
 
 - **Git**: Para clonar el repositorio
 
-- **Backend API**: MeliAPP_v2 corriendo en `https://meli-app-cloud.vercel.app`
+- **Backend API**: MeliAPP_v2 desplegado en Vercel  
+  URL: `https://meli-app-cloud.vercel.app`  
+  Repositorio: [Meli_APP_v3](https://github.com/Nahzap/Meli_APP_v3)
 
 ---
 
@@ -154,15 +205,25 @@ La URL del backend se configura en `lib/config/api_config.dart`:
 class ApiConfig {
   static const String baseUrl = 'https://meli-app-cloud.vercel.app';
   
-  // Endpoints
+  // Endpoints de autenticación
   static const String loginEndpoint = '/api/auth/login';
   static const String registerEndpoint = '/api/auth/register';
+  static const String logoutEndpoint = '/api/auth/logout';
+  static const String sessionEndpoint = '/api/auth/session';
+  
+  // Endpoints de usuario
   static const String profileEndpoint = '/api/profile/me';
+  // Nota: No incluir endpoints específicos con IDs aquí
+  // Construirlos dinámicamente en los servicios
   
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);
+  static const Duration receiveTimeout = Duration(seconds: 30);
+  static const Duration sendTimeout = Duration(seconds: 30);
 }
 ```
+
+> **⚠️ Nota de Seguridad:** La URL del backend es pública (Vercel). No incluyas API keys, tokens o secretos en este archivo.
 
 Para cambiar el backend, modifica `baseUrl` y reconstruye la app.
 
@@ -339,12 +400,18 @@ La aplicación muestra **15 campos completos** del usuario combinando datos de l
 
 | Endpoint | Método | Descripción |
 |----------|--------|-------------|
-| `/api/auth/login` | POST | Iniciar sesión |
+| Endpoint | Método | Descripción |
+|----------|--------|-------------|
+| `/api/auth/login` | POST | Iniciar sesión con email/password |
 | `/api/auth/register` | POST | Registrar nuevo usuario |
-| `/api/auth/logout` | POST | Cerrar sesión |
+| `/api/auth/logout` | POST | Cerrar sesión actual |
 | `/api/auth/session` | GET | Verificar sesión activa |
-| `/api/profile/me` | GET | Obtener perfil completo |
-| `/api/usuario/{uuid}/qr` | GET | Generar QR de usuario |
+| `/api/profile/me` | GET | Obtener perfil del usuario autenticado |
+| `/api/profile/{user_id}` | GET | **[NUEVO]** Obtener perfil público de cualquier usuario |
+| `/api/lotes/{user_id}` | GET | Obtener lotes de un usuario |
+| `/api/lote/{lote_id}` | GET | Obtener detalle de un lote específico |
+| `/api/lote/composicion/{lote_id}` | GET | Obtener composición polínica del lote |
+| `/sugerir?q={query}` | GET | Buscar usuarios por nombre |
 
 ### Backend Repository
 
@@ -358,28 +425,73 @@ El backend está desarrollado en Flask y Supabase:
 ## 📱 Pantallas
 
 ### 1. Login Screen
-- Email y contraseña
+- Logo profesional (colmena.png)
+- Formulario: email y contraseña
 - Validación en tiempo real
-- Botón "¿No tienes cuenta? Regístrate"
-- Manejo de errores
+- Link de registro
+- Manejo de errores con mensajes claros
 
 ### 2. Register Screen
-- Formulario completo de registro
-- Validaciones client-side
+- Formulario completo con validaciones
+- Username, email, password
 - Confirmación de contraseña
-- Link "Ya tienes cuenta? Inicia sesión"
+- Auto-login después del registro
 
 ### 3. Home Screen
-- Tarjeta de usuario con avatar
-- 3 secciones de información
-- Botón flotante de Scanner QR
-- Botón "Cerrar Sesión"
+- **Header con Perfil de Usuario**
+  - Avatar con inicial
+  - Nombre completo y username
+  - Card gradient profesional
+- **Secciones de Información** (fondos blancos con contraste)
+  - Sobre mí: Username, Rol, Estado
+  - Información de Contacto: Nombre, Empresa, Email, Teléfono, Ubicación (con icono apiario01.png)
+- **Navegación Rápida**
+  - Card "Mis Lotes" → Lista de lotes
+  - Card "Buscar Productores" → Búsqueda de usuarios
+- **FAB**: Scanner QR
 
-### 4. QR Scanner Screen
-- Vista de cámara con overlay
+### 4. Search Screen
+- **Búsqueda de Usuarios**
+  - Campo de búsqueda con sugerencias en tiempo real
+  - Activación con 2+ caracteres
+- **Resultados**
+  - Avatar con icono apicultor.png
+  - Nombre completo y rol
+  - Empresa, email, teléfono, comuna (si disponible)
+  - Click → Navega a lotes del usuario
+
+### 5. Lotes List Screen
+- **Header de Usuario** (solo para otros usuarios)
+  - Card con información de contacto completa
+  - Icono apicultor.png
+  - Nombre, empresa, email, teléfono, ubicación
+  - **CRÍTICO**: Permite contactar al productor
+- **Gráfico Polínico Consolidado**
+  - Pie chart (240px) + Leyenda
+  - Layout horizontal
+  - Análisis de múltiples lotes
+- **Ranking TOP 3 Lotes**
+  - Iconos honey02.png (68x68px) con medallas 🥇🥈🥉
+  - Clickeable → Navega a detalle
+  - Producción en kg
+- **Lista de Lotes**
+  - Cards con información resumida
+  - Tap → Detalle del lote
+
+### 6. Lote Detail Screen
+- **Gráfico de Composición** (arriba)
+  - Pie chart con porcentajes
+  - Leyenda de especies
+- **Información del Lote**
+  - Nombre, orden, fecha análisis
+  - Kg producidos
+  - Composición detallada
+
+### 7. QR Scanner Screen
+- Cámara con overlay
 - Controles de flash y cambio de cámara
-- Área de estado (Escaneando/Procesando/Escaneado)
-- Dialogs informativos
+- Detección automática de URLs
+- Apertura en navegador externo
 
 ---
 
@@ -468,51 +580,58 @@ Esto es esperado. `mobile_scanner` solo funciona en Android/iOS. La app muestra 
 
 ---
 
-## 📚 Documentación Adicional
+## 📚 Documentación
 
-El proyecto incluye documentación detallada:
+### Documentación Pública
 
-- **[ANALISIS_REGISTRO.md](ANALISIS_REGISTRO.md)**: Sistema de registro de usuarios
-- **[IMPLEMENTACION_FINAL.md](IMPLEMENTACION_FINAL.md)**: Endpoint `/api/profile/me`
-- **[REGISTRO_IMPLEMENTADO.md](REGISTRO_IMPLEMENTADO.md)**: Flujo completo de registro
-- **[QR_SCANNER_IMPLEMENTADO.md](QR_SCANNER_IMPLEMENTADO.md)**: Scanner QR con URLs
-- **[MIGRACION_MOBILE_SCANNER.md](MIGRACION_MOBILE_SCANNER.md)**: Migración a mobile_scanner
-- **[RESUMEN_COMPLETO_SESION.md](RESUMEN_COMPLETO_SESION.md)**: Resumen de implementaciones
+- **[CHANGELOG.md](docs/CHANGELOG.md)**: Historial completo de versiones
+- **[QR_SCANNER.md](docs/QR_SCANNER.md)**: Documentación del scanner QR
+
+### Documentación de Desarrollo (Local)
+
+> La documentación técnica interna se mantiene localmente y no se sube a GitHub para mantener el repositorio limpio.
+
+Archivos de desarrollo (excluidos en `.gitignore`):
+- Análisis de registro
+- Implementaciones internas
+- Notas de desarrollo
+- Scripts de prueba
 
 ---
 
 ## 🤝 Contribuir
 
-¡Las contribuciones son bienvenidas! Para contribuir:
+> **⚠️ PROYECTO EN DESARROLLO**  
+> Esta aplicación está en fase de testing activo. Las contribuciones están siendo coordinadas internamente.
 
-1. **Fork** el proyecto
-2. Crea una **rama** para tu feature (`git checkout -b feature/AmazingFeature`)
-3. **Commit** tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. **Push** a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un **Pull Request**
+Si encuentras bugs o tienes sugerencias:
+1. Abre un **Issue** describiendo el problema/sugerencia
+2. Incluye capturas de pantalla si es posible
+3. Especifica la plataforma (Android/iOS/Windows)
+4. Incluye logs relevantes
 
-### Guías de Contribución
+### Roadmap
 
-- Sigue el estilo de código Dart/Flutter
-- Ejecuta `flutter analyze` antes de commit
-- Añade tests para nuevas funcionalidades
-- Actualiza documentación si es necesario
+**v2.1.0 (Próxima versión)**
+- [ ] Recuperación de contraseña
+- [ ] Edición de perfil de usuario
+- [ ] Creación de lotes
+- [ ] Filtros de búsqueda avanzados
+- [ ] Notificaciones push
+
+**v2.2.0 (Futuro)**
+- [ ] Modo offline
+- [ ] Sincronización de datos
+- [ ] Exportación de reportes
+- [ ] Integración con sensores IoT
 
 ---
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
+Este proyecto es propietario y está en desarrollo activo. Todos los derechos reservados.
 
-```
-MIT License
-
-Copyright (c) 2025 MeliAPP Flutter
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction...
-```
+Para consultas sobre licenciamiento comercial, contactar a los autores.
 
 ---
 
@@ -541,16 +660,60 @@ in the Software without restriction...
 
 ---
 
-## ⭐ Soporte
+## 🐛 Reporte de Bugs
 
-Si este proyecto te fue útil, considera darle una ⭐ en GitHub!
+**Versión actual:** 2.0.9-dev  
+**Fase:** Testing con usuarios
+
+Si encuentras problemas:
+1. Verifica que estés usando la última versión
+2. Revisa los [Issues](https://github.com/Nahzap/MeliAPP_Flutter/issues) existentes
+3. Si es nuevo, crea un Issue con:
+   - Descripción del problema
+   - Pasos para reproducir
+   - Capturas de pantalla
+   - Plataforma y versión
+   - Logs de error (si existen)
+
+---
+
+## 📊 Estado del Proyecto
+
+**Última actualización:** Diciembre 2025  
+**Estado:** 🟡 En desarrollo activo  
+**Testing:** 🟢 Disponible para pruebas
+
+### Changelog Reciente
+
+**v2.0.9 (Actual)**
+- ✅ Endpoint de perfiles públicos
+- ✅ Información de contacto en búsqueda de usuarios
+- ✅ Contraste mejorado en HomeScreen
+- ✅ Logo colmena en LoginScreen
+- ✅ TOP 3 clickeable con navegación
+
+**v2.0.8**
+- ✅ Correcciones críticas de UI/UX
+- ✅ Card de usuario en lista de lotes
+
+**v2.0.7**
+- ✅ Ajustes de tamaños (iconos +70%, gráfico +20%)
+
+Ver [CHANGELOG.md](docs/CHANGELOG.md) completo para más detalles.
 
 ---
 
 <div align="center">
 
-**Hecho con ❤️ y Flutter**
+### 🍯 MeliAPP Flutter
 
-🍯 **MeliAPP** - Gestión de Producción Apícola 🐝
+**Profesionalizando la Apicultura Chilena** 🐝
+
+Desarrollado con ❤️ usando Flutter
+
+---
+
+[![GitHub](https://img.shields.io/badge/GitHub-Nahzap%2FMeliAPP__Flutter-blue?logo=github)](https://github.com/Nahzap/MeliAPP_Flutter)
+[![Backend](https://img.shields.io/badge/Backend-Meli__APP__v3-green?logo=github)](https://github.com/Nahzap/Meli_APP_v3)
 
 </div>

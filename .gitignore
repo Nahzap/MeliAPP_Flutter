@@ -90,7 +90,7 @@ logs/
 coverage/
 lcov.info
 
-# Documentation files (optional - remove if you want to commit them)
+# Development documentation (kept local only)
 ANALISIS_REGISTRO.md
 IMPLEMENTACION_FINAL.md
 REGISTRO_IMPLEMENTADO.md
@@ -98,6 +98,18 @@ QR_SCANNER_IMPLEMENTADO.md
 MIGRACION_MOBILE_SCANNER.md
 RESUMEN_COMPLETO_SESION.md
 ESTADO_FINAL_DATOS.md
+DEPLOY_*.md
+test_*.py
+*.local.md
+*_INTERNAL.md
+*_DEV.md
 
 # IDE workspace
 *.code-workspace
+
+# Checkpoint files
+CHECKPOINT_*.md
+
+# Commit instructions (internal)
+COMMIT_INSTRUCTIONS.md
+git-commit.ps1
