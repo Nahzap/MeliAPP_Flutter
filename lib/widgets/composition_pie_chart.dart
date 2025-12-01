@@ -31,25 +31,27 @@ class CompositionPieChart extends StatelessWidget {
     final entries = composicion.entries.toList();
     entries.sort((a, b) => b.value.compareTo(a.value));
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Gráfico a la izquierda
-        SizedBox(
-          width: size,
-          height: size,
-          child: PieChart(
-            PieChartData(
-              sections: _buildSections(entries),
-              sectionsSpace: 2,
-              centerSpaceRadius: size * 0.25,
-              borderData: FlBorderData(show: false),
+        // Gráfico centrado arriba
+        Center(
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: PieChart(
+              PieChartData(
+                sections: _buildSections(entries),
+                sectionsSpace: 2,
+                centerSpaceRadius: size * 0.25,
+                borderData: FlBorderData(show: false),
+              ),
             ),
           ),
         ),
-        const SizedBox(width: 20),
-        // Leyenda a la derecha
-        Expanded(child: _buildLegend(entries, context)),
+        const SizedBox(height: 20),
+        // Leyenda abajo con ancho completo
+        _buildLegend(entries, context),
       ],
     );
   }
@@ -131,6 +133,7 @@ class _LegendItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.grey[50],
@@ -138,6 +141,7 @@ class _LegendItem extends StatelessWidget {
         border: Border.all(color: Colors.grey[200]!, width: 1),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.max,
         children: [
           Container(
             width: 18,
@@ -161,8 +165,11 @@ class _LegendItem extends StatelessWidget {
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
+          const SizedBox(width: 12),
           Text(
             '${value.toStringAsFixed(1)}%',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(

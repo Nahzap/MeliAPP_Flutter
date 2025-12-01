@@ -5,7 +5,7 @@
 [![Version](https://img.shields.io/badge/Version-2.0.9--dev-orange)](https://github.com/Nahzap/MeliAPP_Flutter)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Windows-lightgrey)](https://github.com/Nahzap/MeliAPP_Flutter)
 
-> **⚠️ VERSIÓN DE DESARROLLO**  
+> **VERSIÓN DE DESARROLLO**  
 > Esta aplicación está en fase de desarrollo y testing con usuarios. Algunas funcionalidades pueden estar incompletas o experimentar cambios.
 
 Aplicación móvil profesional para la gestión, trazabilidad y análisis de producción apícola. Conecta apicultores, proveedores y compradores en un ecosistema digital completo.

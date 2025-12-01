@@ -13,6 +13,13 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 **Autor**: Rodrigo Jofré Cerda
 
+#### 🐛 Fix: Layout de Composición Polínica
+- ✅ **Cambio de layout horizontal a vertical**
+  - Gráfico de torta centrado arriba
+  - Leyenda de especies abajo con ancho completo
+  - Nombres de especies ahora se leen correctamente
+  - **Fix crítico**: Antes los nombres aparecían letra por letra verticalmente
+
 #### 🌐 Backend: Nuevo Endpoint `/api/profile/<user_id>`
 - ✅ **Consulta de información pública de usuarios**
   - Endpoint: `GET /api/profile/{user_id}`
