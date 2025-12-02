@@ -283,29 +283,45 @@ class AuthService {
       // Guardar todos los datos del usuario (usuarios + info_contacto)
       await prefs.setString('user_id', user.id);
       await prefs.setString('user_username', user.username);
-      if (user.tipoUsuario != null)
+      if (user.tipoUsuario != null) {
         await prefs.setString('user_tipo_usuario', user.tipoUsuario!);
-      if (user.role != null) await prefs.setString('user_role', user.role!);
-      if (user.status != null)
+      }
+      if (user.role != null) {
+        await prefs.setString('user_role', user.role!);
+      }
+      if (user.status != null) {
         await prefs.setString('user_status', user.status!);
-      if (user.activo != null) await prefs.setBool('user_activo', user.activo!);
-      if (user.fechaRegistro != null)
+      }
+      if (user.activo != null) {
+        await prefs.setBool('user_activo', user.activo!);
+      }
+      if (user.fechaRegistro != null) {
         await prefs.setString('user_fecha_registro', user.fechaRegistro!);
-      if (user.lastLogin != null)
+      }
+      if (user.lastLogin != null) {
         await prefs.setString('user_last_login', user.lastLogin!);
-      if (user.nombreCompleto != null)
+      }
+      if (user.nombreCompleto != null) {
         await prefs.setString('user_nombre_completo', user.nombreCompleto!);
-      if (user.nombreEmpresa != null)
+      }
+      if (user.nombreEmpresa != null) {
         await prefs.setString('user_nombre_empresa', user.nombreEmpresa!);
-      if (user.email != null) await prefs.setString('user_email', user.email!);
-      if (user.telefono != null)
+      }
+      if (user.email != null) {
+        await prefs.setString('user_email', user.email!);
+      }
+      if (user.telefono != null) {
         await prefs.setString('user_telefono', user.telefono!);
-      if (user.direccion != null)
+      }
+      if (user.direccion != null) {
         await prefs.setString('user_direccion', user.direccion!);
-      if (user.comuna != null)
+      }
+      if (user.comuna != null) {
         await prefs.setString('user_comuna', user.comuna!);
-      if (user.region != null)
+      }
+      if (user.region != null) {
         await prefs.setString('user_region', user.region!);
+      }
       debugPrint('[AUTH] Datos de usuario guardados localmente');
     } catch (e) {
       debugPrint('[AUTH] Error guardando datos de usuario: $e');
