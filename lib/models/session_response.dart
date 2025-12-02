@@ -18,7 +18,9 @@ class SessionResponse {
     return SessionResponse(
       success: json['success'] as bool,
       loggedIn: json['logged_in'] as bool,
-      user: json['user'] != null ? User.fromJson(json['user'] as Map<String, dynamic>) : null,
+      user: json['user'] != null
+          ? User.fromJson(json['user'] as Map<String, dynamic>)
+          : null,
       error: json['error'] as String?,
     );
   }

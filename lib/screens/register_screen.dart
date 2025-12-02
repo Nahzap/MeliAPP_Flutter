@@ -76,9 +76,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Crear Cuenta'),
-      ),
+      appBar: AppBar(title: const Text('Crear Cuenta')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -320,7 +318,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                   child: Text(
                     '¿Ya tienes cuenta? Inicia sesión',
-                    style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 14),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
 

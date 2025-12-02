@@ -25,13 +25,13 @@ class QRService {
 
       final responseData = await _apiService.getUserQR(uuidSegment);
       final qrResponse = QRResponse.fromJson(responseData);
-      
+
       if (qrResponse.success) {
         debugPrint('[QR] QR generado exitosamente para: $uuidSegment');
       } else {
         debugPrint('[QR] Error generando QR: ${qrResponse.error}');
       }
-      
+
       return qrResponse;
     } catch (e) {
       debugPrint('[QR] Error en generateUserQR: $e');
@@ -47,7 +47,7 @@ class QRService {
   String? extractUuidFromQR(String qrData) {
     try {
       final uri = Uri.tryParse(qrData);
-      
+
       if (uri == null) {
         debugPrint('[QR] QR data no es una URL válida: $qrData');
         return null;
@@ -62,13 +62,12 @@ class QRService {
       // Extraer UUID segment de la URL
       // Formato esperado: /api/usuario/{uuid_segment}
       final pathSegments = uri.pathSegments;
-      
-      if (pathSegments.length >= 3 && 
-          pathSegments[0] == 'api' && 
+
+      if (pathSegments.length >= 3 &&
+          pathSegments[0] == 'api' &&
           pathSegments[1] == 'usuario') {
-        
         final uuidSegment = pathSegments[2];
-        
+
         if (uuidSegment.length == 8) {
           debugPrint('[QR] UUID segment extraído: $uuidSegment');
           return uuidSegment;
@@ -78,7 +77,7 @@ class QRService {
       } else {
         debugPrint('[QR] Formato de URL no válido: ${uri.path}');
       }
-      
+
       return null;
     } catch (e) {
       debugPrint('[QR] Error extrayendo UUID: $e');
@@ -89,7 +88,7 @@ class QRService {
   /// Valida si un string es un UUID segment válido (8 caracteres hexadecimales)
   bool isValidUuidSegment(String segment) {
     if (segment.length != 8) return false;
-    
+
     // Verificar que solo contenga caracteres hexadecimales
     final hexPattern = RegExp(r'^[0-9a-fA-F]+$');
     return hexPattern.hasMatch(segment);
@@ -104,7 +103,7 @@ class QRService {
   /// Esto podría expandirse para hacer una llamada a la API y obtener datos del usuario
   Future<Map<String, dynamic>?> getUserInfoFromQR(String qrData) async {
     final uuidSegment = extractUuidFromQR(qrData);
-    
+
     if (uuidSegment == null) {
       return null;
     }
@@ -113,7 +112,7 @@ class QRService {
       // Aquí podrías agregar una llamada a la API para obtener información del usuario
       // Por ejemplo: GET /api/usuario/{uuid_segment}
       // Por ahora solo retornamos el UUID segment
-      
+
       return {
         'uuid_segment': uuidSegment,
         'profile_url': buildUserUrl(uuidSegment),

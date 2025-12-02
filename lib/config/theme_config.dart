@@ -7,12 +7,12 @@ class AppTheme {
   static const Color primary = Color(0xFFF59E0B); // amber-500
   static const Color primaryDark = Color(0xFFD97706); // amber-600
   static const Color primaryLight = Color(0xFFFBBF24); // amber-400
-  
+
   // Colores secundarios (emerald)
   static const Color secondary = Color(0xFF10B981); // emerald-500
   static const Color secondaryDark = Color(0xFF059669); // emerald-600
   static const Color secondaryLight = Color(0xFF34D399); // emerald-400
-  
+
   // Escala de grises (slate)
   static const Color slate50 = Color(0xFFF8FAFC);
   static const Color slate100 = Color(0xFFF1F5F9);
@@ -24,13 +24,13 @@ class AppTheme {
   static const Color slate700 = Color(0xFF334155);
   static const Color slate800 = Color(0xFF1E293B);
   static const Color slate900 = Color(0xFF0F172A);
-  
+
   // Colores de estado
   static const Color success = Color(0xFF10B981);
   static const Color error = Color(0xFFEF4444);
   static const Color warning = Color(0xFFF59E0B);
   static const Color info = Color(0xFF3B82F6);
-  
+
   // Gradientes
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -41,16 +41,13 @@ class AppTheme {
       Color(0xFFD1FAE5), // emerald-100
     ],
   );
-  
+
   static const LinearGradient authGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFFF5F7FA),
-      Color(0xFFC3CFE2),
-    ],
+    colors: [Color(0xFFF5F7FA), Color(0xFFC3CFE2)],
   );
-  
+
   /// Tema principal de la app
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
@@ -67,7 +64,7 @@ class AppTheme {
       onSurface: slate800,
     ),
     scaffoldBackgroundColor: slate50,
-    
+
     // AppBar
     appBarTheme: AppBarTheme(
       backgroundColor: primary,
@@ -81,16 +78,14 @@ class AppTheme {
         color: Colors.white,
       ),
     ),
-    
+
     // Botones primarios
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primary,
         foregroundColor: Colors.white,
         padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 2,
         textStyle: TextStyle(
           fontSize: 16,
@@ -99,7 +94,7 @@ class AppTheme {
         ),
       ),
     ),
-    
+
     // Botones de texto
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
@@ -111,7 +106,7 @@ class AppTheme {
         ),
       ),
     ),
-    
+
     // Inputs
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
@@ -139,24 +134,18 @@ class AppTheme {
         fontWeight: FontWeight.w500,
         fontFamily: 'Inter',
       ),
-      hintStyle: TextStyle(
-        color: slate400,
-        fontSize: 14,
-        fontFamily: 'Inter',
-      ),
+      hintStyle: TextStyle(color: slate400, fontSize: 14, fontFamily: 'Inter'),
     ),
-    
+
     // Cards
     cardTheme: CardThemeData(
       color: Colors.white,
       elevation: 2,
       shadowColor: Colors.black.withValues(alpha: 0.1),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
     ),
-    
+
     // Textos
     textTheme: TextTheme(
       displayLarge: TextStyle(
@@ -195,16 +184,8 @@ class AppTheme {
         color: slate700,
         fontFamily: 'Inter',
       ),
-      bodyLarge: TextStyle(
-        fontSize: 16,
-        color: slate700,
-        fontFamily: 'Inter',
-      ),
-      bodyMedium: TextStyle(
-        fontSize: 14,
-        color: slate600,
-        fontFamily: 'Inter',
-      ),
+      bodyLarge: TextStyle(fontSize: 16, color: slate700, fontFamily: 'Inter'),
+      bodyMedium: TextStyle(fontSize: 14, color: slate600, fontFamily: 'Inter'),
       labelLarge: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w600,
@@ -213,7 +194,7 @@ class AppTheme {
       ),
     ),
   );
-  
+
   /// Decoraciones comunes
   static BoxDecoration cardDecoration = BoxDecoration(
     color: Colors.white,
@@ -226,7 +207,7 @@ class AppTheme {
       ),
     ],
   );
-  
+
   static BoxDecoration authCardDecoration = BoxDecoration(
     color: Colors.white,
     borderRadius: BorderRadius.circular(16),

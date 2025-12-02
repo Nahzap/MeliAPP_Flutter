@@ -127,7 +127,6 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     );
   }
 
-
   Future<void> _processQRCode(String qrData) async {
     setState(() {
       isProcessing = true;
@@ -205,13 +204,13 @@ $qrData
     try {
       final uri = Uri.parse(url);
       debugPrint('[QR] Intentando abrir URL en navegador: $url');
-      
+
       // Intentar lanzar la URL directamente
       final launched = await launchUrl(
         uri,
         mode: LaunchMode.externalApplication, // Abre en navegador externo
       );
-      
+
       if (launched) {
         debugPrint('[QR] ✅ URL abierta exitosamente en navegador');
         if (mounted) {
@@ -227,7 +226,8 @@ $qrData
       if (mounted) {
         _showResultDialog(
           title: '❌ Error',
-          content: 'No se pudo abrir la URL en el navegador:\n\nNo se puede abrir la URL: $url',
+          content:
+              'No se pudo abrir la URL en el navegador:\n\nNo se puede abrir la URL: $url',
           isSuccess: false,
         );
       }
@@ -280,5 +280,4 @@ $qrData
     });
     await controller.start();
   }
-
 }

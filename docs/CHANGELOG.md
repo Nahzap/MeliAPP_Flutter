@@ -13,6 +13,15 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 **Autor**: Rodrigo Jofré Cerda
 
+#### 🔐 Password Reset Implementado
+- ✅ **Recuperación de contraseña funcionando**
+  - Endpoint: `POST /api/auth/forgot-password`
+  - Email con link de recuperación vía Resend SMTP
+  - Página web: `/reset-password` con formulario
+  - Token se lee desde hash (#) de URL
+  - API REST de Supabase para actualizar contraseña
+  - **Flujo completo verificado y funcionando**
+
 #### 🐛 Fix: Layout de Composición Polínica
 - ✅ **Cambio de layout horizontal a vertical**
   - Gráfico de torta centrado arriba

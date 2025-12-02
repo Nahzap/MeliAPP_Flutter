@@ -29,10 +29,13 @@ class AuthService {
 
         // Intentar obtener datos REALES del usuario desde el servidor
         try {
-          debugPrint('[AUTH] Obteniendo datos reales del usuario desde /api/user/current...');
+          debugPrint(
+            '[AUTH] Obteniendo datos reales del usuario desde /api/user/current...',
+          );
           final currentUserResponse = await _apiService.getCurrentUser();
 
-          if (currentUserResponse['success'] == true && currentUserResponse['user'] != null) {
+          if (currentUserResponse['success'] == true &&
+              currentUserResponse['user'] != null) {
             final userData = currentUserResponse['user'];
 
             // Crear usuario con datos REALES de Supabase (usuarios + info_contacto)
@@ -55,8 +58,12 @@ class AuthService {
             );
 
             await _saveUserData(realUser);
-            debugPrint('[AUTH] Datos REALES del usuario obtenidos desde Supabase');
-            debugPrint('[AUTH] Usuario: ${realUser.username}, Role: ${realUser.role}, Tipo: ${realUser.tipoUsuario}');
+            debugPrint(
+              '[AUTH] Datos REALES del usuario obtenidos desde Supabase',
+            );
+            debugPrint(
+              '[AUTH] Usuario: ${realUser.username}, Role: ${realUser.role}, Tipo: ${realUser.tipoUsuario}',
+            );
           } else {
             throw Exception('No se pudieron obtener datos del usuario');
           }
@@ -152,28 +159,32 @@ class AuthService {
   }) async {
     try {
       debugPrint('[AUTH] Iniciando registro para: $email');
-      
+
       // IMPORTANTE: Limpiar cualquier sesión anterior antes de registrar
       await _clearUserData();
       await _saveLoginState(false);
       _apiService.clearCookies();
-      
+
       // Llamar al endpoint de registro
       final response = await _apiService.register(
         username: username,
         email: email,
         password: password,
       );
-      
+
       if (response['success'] == true) {
         debugPrint('[AUTH] ✅ Registro exitoso');
-        debugPrint('[AUTH] ⚠️ El usuario debe confirmar su email antes de hacer login');
-        
+        debugPrint(
+          '[AUTH] ⚠️ El usuario debe confirmar su email antes de hacer login',
+        );
+
         // NO intentar obtener datos del usuario porque NO está autenticado
         // El usuario debe confirmar email y luego hacer login
         return {
           'success': true,
-          'message': response['message'] ?? 'Registro exitoso. Por favor confirma tu email.',
+          'message':
+              response['message'] ??
+              'Registro exitoso. Por favor confirma tu email.',
           'requires_confirmation': true,
         };
       } else {
@@ -185,10 +196,7 @@ class AuthService {
       }
     } catch (e) {
       debugPrint('[AUTH] Excepción en registro: $e');
-      return {
-        'success': false,
-        'error': 'Error de conexión al registrar',
-      };
+      return {'success': false, 'error': 'Error de conexión al registrar'};
     }
   }
 
@@ -197,7 +205,7 @@ class AuthService {
   Future<bool> logout() async {
     try {
       debugPrint('[AUTH] 🔓 Cerrando sesión...');
-      
+
       // 1. Llamar al endpoint de logout en servidor
       try {
         await _apiService.logout();
@@ -206,28 +214,28 @@ class AuthService {
         debugPrint('[AUTH] ⚠️ Error cerrando sesión en servidor: $e');
         // Continuar con limpieza local de todos modos
       }
-      
+
       // 2. Limpiar TODAS las cookies
       _apiService.clearCookies();
       debugPrint('[AUTH] 🍪 Cookies limpiadas');
-      
+
       // 3. Limpiar TODOS los datos de SharedPreferences
       await _clearUserData();
       debugPrint('[AUTH] 📦 SharedPreferences limpiado');
-      
+
       // 4. Marcar como no logueado
       await _saveLoginState(false);
       debugPrint('[AUTH] ✅ Logout completo');
-      
+
       return true;
     } catch (e) {
       debugPrint('[AUTH] ❌ Error crítico en logout: $e');
-      
+
       // IMPORTANTE: Limpiar todo de todos modos
       _apiService.clearCookies();
       await _clearUserData();
       await _saveLoginState(false);
-      
+
       return false;
     }
   }
@@ -275,19 +283,29 @@ class AuthService {
       // Guardar todos los datos del usuario (usuarios + info_contacto)
       await prefs.setString('user_id', user.id);
       await prefs.setString('user_username', user.username);
-      if (user.tipoUsuario != null) await prefs.setString('user_tipo_usuario', user.tipoUsuario!);
+      if (user.tipoUsuario != null)
+        await prefs.setString('user_tipo_usuario', user.tipoUsuario!);
       if (user.role != null) await prefs.setString('user_role', user.role!);
-      if (user.status != null) await prefs.setString('user_status', user.status!);
+      if (user.status != null)
+        await prefs.setString('user_status', user.status!);
       if (user.activo != null) await prefs.setBool('user_activo', user.activo!);
-      if (user.fechaRegistro != null) await prefs.setString('user_fecha_registro', user.fechaRegistro!);
-      if (user.lastLogin != null) await prefs.setString('user_last_login', user.lastLogin!);
-      if (user.nombreCompleto != null) await prefs.setString('user_nombre_completo', user.nombreCompleto!);
-      if (user.nombreEmpresa != null) await prefs.setString('user_nombre_empresa', user.nombreEmpresa!);
+      if (user.fechaRegistro != null)
+        await prefs.setString('user_fecha_registro', user.fechaRegistro!);
+      if (user.lastLogin != null)
+        await prefs.setString('user_last_login', user.lastLogin!);
+      if (user.nombreCompleto != null)
+        await prefs.setString('user_nombre_completo', user.nombreCompleto!);
+      if (user.nombreEmpresa != null)
+        await prefs.setString('user_nombre_empresa', user.nombreEmpresa!);
       if (user.email != null) await prefs.setString('user_email', user.email!);
-      if (user.telefono != null) await prefs.setString('user_telefono', user.telefono!);
-      if (user.direccion != null) await prefs.setString('user_direccion', user.direccion!);
-      if (user.comuna != null) await prefs.setString('user_comuna', user.comuna!);
-      if (user.region != null) await prefs.setString('user_region', user.region!);
+      if (user.telefono != null)
+        await prefs.setString('user_telefono', user.telefono!);
+      if (user.direccion != null)
+        await prefs.setString('user_direccion', user.direccion!);
+      if (user.comuna != null)
+        await prefs.setString('user_comuna', user.comuna!);
+      if (user.region != null)
+        await prefs.setString('user_region', user.region!);
       debugPrint('[AUTH] Datos de usuario guardados localmente');
     } catch (e) {
       debugPrint('[AUTH] Error guardando datos de usuario: $e');
