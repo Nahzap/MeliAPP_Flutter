@@ -4,10 +4,12 @@ import '../../models/lote_model.dart';
 import '../../models/user_model.dart';
 import '../../services/lotes_service.dart';
 import '../../services/api_service.dart';
+import '../../services/taxa_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/lote_card.dart';
 import '../../widgets/app_icon.dart';
 import '../../widgets/composition_pie_chart.dart';
+import '../../widgets/formal_catalog_table.dart';
 
 /// Pantalla que muestra la lista de lotes de miel del usuario.
 ///
@@ -82,6 +84,9 @@ class _LotesListScreenState extends State<LotesListScreen> {
 
       debugPrint('[LOTES_LIST] Cargando lotes para usuario: $userId');
       final lotes = await _lotesService.getLotesUsuario(userId);
+      if (mounted) {
+        await context.read<TaxaService>().ensureLoaded();
+      }
 
       setState(() {
         _lotes = lotes;
@@ -232,11 +237,14 @@ class _LotesListScreenState extends State<LotesListScreen> {
       (sum, lote) => sum + (lote.kgProducidos ?? 0),
     );
 
-    // Consolidar composición de todos los lotes
+    final taxa = TaxaService.catalogOf(context);
     final Map<String, double> consolidatedComposition = {};
     for (final lote in _lotes) {
-      final especies = lote.getEspeciesOrdenadas();
-      for (final entry in especies) {
+      final especies = taxa.labeledComposition(
+        lote.parseComposicion(),
+        lote: lote,
+      );
+      for (final entry in especies.entries) {
         consolidatedComposition[entry.key] =
             (consolidatedComposition[entry.key] ?? 0) + entry.value;
       }
@@ -293,7 +301,14 @@ class _LotesListScreenState extends State<LotesListScreen> {
                       ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                     ),
                     const SizedBox(height: 20),
-                    CompositionPieChart(composicion: consolidatedComposition),
+                    CompositionPieChart(
+                      composicion: consolidatedComposition,
+                      botanicalLabels: true,
+                      tableCaption: catalogCaption(
+                        1,
+                        'Composición polínica consolidada',
+                      ),
+                    ),
                   ],
                 ),
               ),

@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import '../models/qr_response.dart';
+import '../config/api_config.dart';
 import 'api_service.dart';
 
-/// Servicio para manejo de códigos QR
-/// Genera QR a través de la API REST y procesa QR escaneados
+/// Servicio para códigos QR de MeliAPP Cloud (solo lectura / resolución de perfil).
 class QRService {
   static final QRService _instance = QRService._internal();
   factory QRService() => _instance;
@@ -11,8 +11,6 @@ class QRService {
 
   final ApiService _apiService = ApiService();
 
-  /// Genera un código QR para un usuario específico
-  /// [uuidSegment] debe ser el segmento UUID de 8 caracteres del usuario
   Future<QRResponse?> generateUserQR(String uuidSegment) async {
     try {
       if (uuidSegment.length != 8) {
@@ -24,15 +22,7 @@ class QRService {
       }
 
       final responseData = await _apiService.getUserQR(uuidSegment);
-      final qrResponse = QRResponse.fromJson(responseData);
-
-      if (qrResponse.success) {
-        debugPrint('[QR] QR generado exitosamente para: $uuidSegment');
-      } else {
-        debugPrint('[QR] Error generando QR: ${qrResponse.error}');
-      }
-
-      return qrResponse;
+      return QRResponse.fromJson(responseData);
     } catch (e) {
       debugPrint('[QR] Error en generateUserQR: $e');
       return QRResponse(
@@ -42,85 +32,94 @@ class QRService {
     }
   }
 
-  /// Extrae el UUID segment de una URL de QR escaneada
-  /// Ejemplo: https://meli-app-cloud.vercel.app/api/usuario/550e8400 -> 550e8400
-  String? extractUuidFromQR(String qrData) {
-    try {
-      final uri = Uri.tryParse(qrData);
-
-      if (uri == null) {
-        debugPrint('[QR] QR data no es una URL válida: $qrData');
-        return null;
-      }
-
-      // Verificar que sea de nuestro dominio
-      if (!uri.host.contains('meli-app-cloud.vercel.app')) {
-        debugPrint('[QR] QR no es de nuestro dominio: ${uri.host}');
-        return null;
-      }
-
-      // Extraer UUID segment de la URL
-      // Formato esperado: /api/usuario/{uuid_segment}
-      final pathSegments = uri.pathSegments;
-
-      if (pathSegments.length >= 3 &&
-          pathSegments[0] == 'api' &&
-          pathSegments[1] == 'usuario') {
-        final uuidSegment = pathSegments[2];
-
-        if (uuidSegment.length == 8) {
-          debugPrint('[QR] UUID segment extraído: $uuidSegment');
-          return uuidSegment;
-        } else {
-          debugPrint('[QR] UUID segment no tiene 8 caracteres: $uuidSegment');
-        }
-      } else {
-        debugPrint('[QR] Formato de URL no válido: ${uri.path}');
-      }
-
-      return null;
-    } catch (e) {
-      debugPrint('[QR] Error extrayendo UUID: $e');
-      return null;
-    }
+  bool isMeliappHost(String? host) {
+    if (host == null || host.isEmpty) return false;
+    final normalized = host.toLowerCase();
+    return ApiConfig.qrHosts.any(
+      (allowed) => normalized == allowed || normalized.endsWith('.$allowed'),
+    );
   }
 
-  /// Valida si un string es un UUID segment válido (8 caracteres hexadecimales)
+  /// Extrae un identificador de perfil desde una URL de Cloud.
+  ///
+  /// Soporta:
+  /// - /api/usuario/{8chars}
+  /// - /profile/{uuid}
+  /// - /usuario/{8chars}
+  QrProfileRef? parseProfileRef(String qrData) {
+    final uri = Uri.tryParse(qrData.trim());
+    if (uri == null || uri.host.isEmpty) return null;
+    if (!isMeliappHost(uri.host)) {
+      debugPrint('[QR] Host no reconocido: ${uri.host}');
+      return null;
+    }
+
+    final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+    if (segments.length >= 3 &&
+        segments[0] == 'api' &&
+        segments[1] == 'usuario' &&
+        segments[2].length == 8) {
+      return QrProfileRef(uuidSegment: segments[2]);
+    }
+    if (segments.length >= 2 &&
+        segments[0] == 'usuario' &&
+        segments[1].length == 8) {
+      return QrProfileRef(uuidSegment: segments[1]);
+    }
+    if (segments.length >= 2 && segments[0] == 'profile') {
+      final id = segments[1];
+      if (id.length == 8) return QrProfileRef(uuidSegment: id);
+      if (id.length >= 8) return QrProfileRef(userId: id);
+    }
+    return null;
+  }
+
+  /// Extrae un segmento de 8 caracteres cuando existe en la URL.
+  String? extractUuidFromQR(String qrData) {
+    final ref = parseProfileRef(qrData);
+    if (ref == null) return null;
+    if (ref.uuidSegment != null) return ref.uuidSegment;
+    final id = ref.userId?.replaceAll('-', '');
+    if (id != null && id.length >= 8) return id.substring(0, 8);
+    return null;
+  }
+
+  Future<String?> resolveUserId(String qrData) async {
+    final ref = parseProfileRef(qrData);
+    if (ref == null) return null;
+    return ref.userId ?? ref.uuidSegment;
+  }
+
   bool isValidUuidSegment(String segment) {
     if (segment.length != 8) return false;
-
-    // Verificar que solo contenga caracteres hexadecimales
-    final hexPattern = RegExp(r'^[0-9a-fA-F]+$');
-    return hexPattern.hasMatch(segment);
+    return RegExp(r'^[0-9a-fA-F]+$').hasMatch(segment);
   }
 
-  /// Construye la URL completa para un UUID segment
   String buildUserUrl(String uuidSegment) {
-    return 'https://meli-app-cloud.vercel.app/api/usuario/$uuidSegment';
+    return '${ApiConfig.baseUrl}/api/usuario/$uuidSegment';
   }
 
-  /// Obtiene información de usuario a partir de un UUID segment escaneado
-  /// Esto podría expandirse para hacer una llamada a la API y obtener datos del usuario
+  String buildProfileUrl(String userId) {
+    return '${ApiConfig.baseUrl}/profile/$userId';
+  }
+
   Future<Map<String, dynamic>?> getUserInfoFromQR(String qrData) async {
-    final uuidSegment = extractUuidFromQR(qrData);
-
-    if (uuidSegment == null) {
-      return null;
-    }
-
-    try {
-      // Aquí podrías agregar una llamada a la API para obtener información del usuario
-      // Por ejemplo: GET /api/usuario/{uuid_segment}
-      // Por ahora solo retornamos el UUID segment
-
-      return {
-        'uuid_segment': uuidSegment,
-        'profile_url': buildUserUrl(uuidSegment),
-        'scanned_at': DateTime.now().toIso8601String(),
-      };
-    } catch (e) {
-      debugPrint('[QR] Error obteniendo info de usuario: $e');
-      return null;
-    }
+    final userId = await resolveUserId(qrData);
+    if (userId == null) return null;
+    final segment = userId.replaceAll('-', '');
+    final uuidSegment = segment.length >= 8 ? segment.substring(0, 8) : userId;
+    return {
+      'user_id': userId,
+      'uuid_segment': uuidSegment,
+      'profile_url': buildProfileUrl(userId),
+      'scanned_at': DateTime.now().toIso8601String(),
+    };
   }
+}
+
+class QrProfileRef {
+  final String? userId;
+  final String? uuidSegment;
+
+  const QrProfileRef({this.userId, this.uuidSegment});
 }

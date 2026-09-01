@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/lote_model.dart';
+import '../services/taxa_service.dart';
 import 'app_icon.dart';
+import 'composition_pie_chart.dart';
+import 'species_catalog_table.dart';
 
 /// Card para mostrar resumen de un lote en la lista.
 ///
@@ -14,7 +17,13 @@ class LoteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final composicion = lote.parseComposicion();
+    final taxa = TaxaService.catalogOf(context);
+    final composicion = taxa.labeledComposition(
+      lote.parseComposicion(),
+      lote: lote,
+    );
+    final especies = composicion.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     final total = lote.getTotalComposicion();
     final isValid = lote.isComposicionValida();
 
@@ -52,6 +61,29 @@ class LoteCard extends StatelessWidget {
                             color: Colors.grey[600],
                           ),
                         ),
+                        if (lote.hasCertificado || lote.isEstadoCertificacion)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Wrap(
+                              spacing: 6,
+                              children: [
+                                if (lote.hasCertificado)
+                                  Chip(
+                                    visualDensity: VisualDensity.compact,
+                                    label: const Text('Certificado'),
+                                    avatar: const Icon(
+                                      Icons.verified,
+                                      size: 16,
+                                    ),
+                                  ),
+                                if (lote.isEstadoCertificacion)
+                                  Chip(
+                                    visualDensity: VisualDensity.compact,
+                                    label: Text(lote.composicion ?? ''),
+                                  ),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -92,7 +124,7 @@ class LoteCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Composición (${composicion.length} especies):',
+                    'Composición (${composicion.length} especies)',
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -101,37 +133,17 @@ class LoteCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
 
-              // Top 3 especies
-              if (composicion.isNotEmpty)
-                ...lote.getEspeciesOrdenadas().take(3).map((entry) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            entry.key,
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ),
-                        Container(
-                          constraints: const BoxConstraints(minWidth: 50),
-                          child: Text(
-                            '${entry.value.toStringAsFixed(1)}%',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                            ),
-                            textAlign: TextAlign.right,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                })
+              if (especies.isNotEmpty)
+                CompositionCatalogTable(
+                  entries: especies.take(3).toList(),
+                  swatches: CompositionPieChart.palette,
+                  botanicalLabels: true,
+                )
               else
                 Text(
-                  'Sin datos de composición',
+                  lote.isEstadoCertificacion
+                      ? lote.composicion!
+                      : 'Sin datos de composición',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: Colors.grey,
                     fontStyle: FontStyle.italic,
@@ -175,7 +187,7 @@ class LoteCard extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    '${total.toStringAsFixed(2)}%',
+                    '${total.toStringAsFixed(2)} %',
                     style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: isValid ? Colors.green : Colors.orange,

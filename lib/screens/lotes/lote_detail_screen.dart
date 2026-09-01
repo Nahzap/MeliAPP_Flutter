@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../config/api_config.dart';
 import '../../models/lote_model.dart';
 import '../../services/lotes_service.dart';
+import '../../services/taxa_service.dart';
 import '../../widgets/composition_pie_chart.dart';
 import '../../widgets/app_icon.dart';
+import '../../widgets/formal_catalog_table.dart';
+import 'certificado_document_screen.dart';
 
 /// Pantalla de detalle de un lote de miel.
 ///
@@ -19,6 +25,7 @@ class LoteDetailScreen extends StatefulWidget {
 
 class _LoteDetailScreenState extends State<LoteDetailScreen> {
   final LotesService _lotesService = LotesService();
+  final ScrollController _scrollController = ScrollController();
   Lote? _lote;
   bool _isLoading = true;
   String? _error;
@@ -27,6 +34,12 @@ class _LoteDetailScreenState extends State<LoteDetailScreen> {
   void initState() {
     super.initState();
     _loadLote();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadLote() async {
@@ -38,6 +51,9 @@ class _LoteDetailScreenState extends State<LoteDetailScreen> {
     try {
       debugPrint('[LOTE_DETAIL] Cargando lote: ${widget.loteId}');
       final lote = await _lotesService.getLote(widget.loteId);
+      if (mounted) {
+        await context.read<TaxaService>().ensureLoaded();
+      }
 
       setState(() {
         _lote = lote;
@@ -84,13 +100,22 @@ class _LoteDetailScreenState extends State<LoteDetailScreen> {
       );
     }
 
-    final composicion = _lote!.parseComposicion();
+    final taxa = TaxaService.catalogOf(context);
+    final composicion = taxa.labeledComposition(
+      _lote!.parseComposicion(),
+      lote: _lote,
+    );
     final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Lote ${_lote!.ordenMiel}'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.arrow_upward),
+            onPressed: _scrollToTop,
+            tooltip: 'Ir arriba',
+          ),
           IconButton(
             icon: const Icon(Icons.qr_code),
             onPressed: _handleShowQR,
@@ -99,6 +124,7 @@ class _LoteDetailScreenState extends State<LoteDetailScreen> {
         ],
       ),
       body: SingleChildScrollView(
+        controller: _scrollController,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -111,8 +137,9 @@ class _LoteDetailScreenState extends State<LoteDetailScreen> {
             // Información básica
             _buildInfoCard(theme),
 
-            // Lista detallada de especies
-            _buildSpeciesDetailCard(theme),
+            _buildObservaciones(theme),
+
+            _buildCertificado(theme),
 
             const SizedBox(height: 24),
           ],
@@ -198,6 +225,10 @@ class _LoteDetailScreenState extends State<LoteDetailScreen> {
                 _formatDate(_lote!.fechaActualizacion),
               ),
             ],
+            if (_lote!.revisorNombre != null) ...[
+              const Divider(),
+              _buildInfoRow('Revisor', _lote!.revisorNombre!),
+            ],
           ],
         ),
       ),
@@ -209,6 +240,7 @@ class _LoteDetailScreenState extends State<LoteDetailScreen> {
     Map<String, double> composicion,
   ) {
     if (composicion.isEmpty) {
+      final estado = _lote!.isEstadoCertificacion ? _lote!.composicion : null;
       return Card(
         margin: const EdgeInsets.all(16),
         child: Padding(
@@ -216,13 +248,16 @@ class _LoteDetailScreenState extends State<LoteDetailScreen> {
           child: Column(
             children: [
               Icon(
-                Icons.sentiment_dissatisfied,
+                estado != null
+                    ? Icons.hourglass_empty
+                    : Icons.sentiment_dissatisfied,
                 size: 64,
                 color: Colors.grey[400],
               ),
               const SizedBox(height: 16),
               Text(
-                'Sin Datos de Composición',
+                estado ?? 'Sin Datos de Composición',
+                textAlign: TextAlign.center,
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: Colors.grey[600],
                 ),
@@ -254,107 +289,14 @@ class _LoteDetailScreenState extends State<LoteDetailScreen> {
             ),
             const SizedBox(height: 24),
             Center(
-              child: CompositionPieChart(composicion: composicion, size: 280),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSpeciesDetailCard(ThemeData theme) {
-    final especies = _lote!.getEspeciesOrdenadas();
-    final total = _lote!.getTotalComposicion();
-    final isValid = _lote!.isComposicionValida();
-
-    if (especies.isEmpty) return const SizedBox.shrink();
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Detalle por Especie',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+              child: CompositionPieChart(
+                composicion: composicion,
+                size: 280,
+                botanicalLabels: true,
+                tableCaption: catalogCaption(1, 'Composición polínica'),
               ),
             ),
-            const SizedBox(height: 16),
-            ...especies.map((entry) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            entry.key,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          '${entry.value.toStringAsFixed(2)}%',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: entry.value / 100,
-                        minHeight: 8,
-                        backgroundColor: Colors.grey[200],
-                        valueColor: AlwaysStoppedAnimation(
-                          theme.colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-            const Divider(height: 32),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      isValid ? Icons.check_circle : Icons.warning,
-                      size: 20,
-                      color: isValid ? Colors.green : Colors.orange,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Total:',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  '${total.toStringAsFixed(2)}%',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: isValid ? Colors.green : Colors.orange,
-                  ),
-                ),
-              ],
-            ),
-            if (!isValid) ...[
+            if (!_lote!.isComposicionValida()) ...[
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -371,7 +313,7 @@ class _LoteDetailScreenState extends State<LoteDetailScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'La composición no suma exactamente 100%. Considera revisar los datos.',
+                        'La composición no suma exactamente 100 %. Conviene revisar los datos.',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: Colors.orange[900],
                         ),
@@ -381,6 +323,84 @@ class _LoteDetailScreenState extends State<LoteDetailScreen> {
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildObservaciones(ThemeData theme) {
+    final apicultor = _lote!.observacionesApicultor;
+    final revisor = _lote!.observacionesRevisor;
+    if (apicultor == null && revisor == null) return const SizedBox.shrink();
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Observaciones',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            if (apicultor != null) ...[
+              const SizedBox(height: 12),
+              Text('Apicultor', style: theme.textTheme.labelLarge),
+              Text(apicultor),
+            ],
+            if (revisor != null) ...[
+              const SizedBox(height: 12),
+              Text('Revisor', style: theme.textTheme.labelLarge),
+              Text(revisor),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCertificado(ThemeData theme) {
+    if (!_lote!.puedeMostrarCertificado) return const SizedBox.shrink();
+
+    return Card(
+      margin: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.verified, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Text(
+                  'Certificado de origen botánico',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CertificadoDocumentScreen(lote: _lote!),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.description_outlined),
+                label: const Text('Ver documento'),
+              ),
+            ),
           ],
         ),
       ),
@@ -408,10 +428,19 @@ class _LoteDetailScreenState extends State<LoteDetailScreen> {
     return DateFormat('dd/MM/yyyy').format(date);
   }
 
-  void _handleShowQR() {
-    // TODO: Implementar visualización de QR del lote
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Función QR próximamente')));
+  void _scrollToTop() {
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _handleShowQR() async {
+    final url =
+        '${ApiConfig.baseUrl}/profile/${_lote!.authUserId}?lote=${_lote!.id}';
+    final uri = Uri.parse(url);
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 }

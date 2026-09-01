@@ -137,40 +137,23 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     await controller.stop();
 
     try {
-      // PRIMERO: Verificar si es una URL
+      final userId = await _qrService.resolveUserId(qrData);
+      if (userId != null && mounted) {
+        Navigator.of(context).pop(userId);
+        return;
+      }
+
       if (_isValidUrl(qrData)) {
         debugPrint('[QR] URL detectada: $qrData');
         await _openUrlInBrowser(qrData);
         return;
       }
 
-      // SEGUNDO: Si no es URL, intentar procesar como QR del sistema MeliAPP
-      debugPrint('[QR] No es URL, procesando como QR de MeliAPP...');
-      final userInfo = await _qrService.getUserInfoFromQR(qrData);
-
-      if (userInfo != null && mounted) {
-        // Mostrar resultado exitoso
+      if (mounted) {
         _showResultDialog(
-          title: '✅ QR Válido',
+          title: 'QR no reconocido',
           content:
-              '''
-UUID Segment: ${userInfo['uuid_segment']}
-URL del Perfil: ${userInfo['profile_url']}
-Escaneado: ${userInfo['scanned_at']}
-          ''',
-          isSuccess: true,
-        );
-      } else if (mounted) {
-        // QR no válido o no es de nuestro sistema
-        _showResultDialog(
-          title: '❌ QR No Válido',
-          content:
-              '''
-El código QR escaneado no pertenece al sistema MeliAPP.
-
-Datos escaneados:
-$qrData
-          ''',
+              'El código no corresponde a un perfil de MeliAPP Cloud.\n\n$qrData',
           isSuccess: false,
         );
       }

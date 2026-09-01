@@ -364,7 +364,9 @@ class _SearchScreenState extends State<SearchScreen> {
         return ListTile(
           dense: true,
           leading: Icon(
-            sugerencia.isPerson ? Icons.person_outline : Icons.local_offer_outlined,
+            sugerencia.isPerson
+                ? Icons.person_outline
+                : Icons.local_offer_outlined,
             size: 20,
             color: AppTheme.slate400,
           ),
@@ -467,7 +469,10 @@ class _SearchScreenState extends State<SearchScreen> {
                         perfil.role ?? 'Apicultor',
                         if (perfil.ubicacion != null) perfil.ubicacion!,
                       ].join(' · '),
-                      style: TextStyle(fontSize: 12.5, color: AppTheme.slate600),
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: AppTheme.slate600,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -475,7 +480,10 @@ class _SearchScreenState extends State<SearchScreen> {
                       const SizedBox(height: 2),
                       Text(
                         perfil.nombreEmpresa!,
-                        style: TextStyle(fontSize: 12, color: AppTheme.slate500),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.slate500,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

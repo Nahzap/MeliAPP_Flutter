@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
@@ -21,25 +22,13 @@ class AuthProvider with ChangeNotifier {
   bool get isInitialized => _isInitialized;
 
   /// Inicializa el provider verificando el estado de autenticación
-  /// IMPORTANTE: Verifica y limpia cualquier estado inconsistente
   Future<void> initialize() async {
     if (_isInitialized) return;
 
     _setLoading(true);
 
     try {
-      // Verificar estado de autenticación
-      await _checkAuthStatus();
-
-      // Si no hay usuario pero SharedPreferences dice que está logueado, limpiar
-      if (_user == null) {
-        final isLoggedIn = await _authService.isLoggedIn();
-        if (!isLoggedIn) {
-          debugPrint('[AUTH_PROVIDER] 🧹 Limpiando estado inconsistente...');
-          await _authService.logout(); // Forzar limpieza completa
-        }
-      }
-
+      _user = await _authService.restoreSession();
       _isInitialized = true;
     } catch (e) {
       debugPrint('[AUTH_PROVIDER] Error en inicialización: $e');
@@ -85,12 +74,35 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  /// Login con Google OAuth (MeliAPP Cloud).
+  Future<bool> loginWithGoogle() async {
+    _setLoading(true);
+    _clearError();
+    try {
+      final response = await _authService.loginWithGoogle();
+      if (response.success) {
+        await _loadBasicUserData();
+        final live = await _authService.fetchCurrentProfile();
+        if (live != null) _user = live;
+        return _user != null;
+      }
+      _setError(response.error ?? 'No se pudo iniciar sesión con Google');
+      return false;
+    } catch (e) {
+      _setError('No se pudo iniciar sesión con Google');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   /// Registra un nuevo usuario
   /// IMPORTANTE: El registro NO crea sesión, el usuario debe confirmar email
   Future<Map<String, dynamic>> register({
     required String username,
     required String email,
     required String password,
+    required String tipoUsuario,
   }) async {
     _setLoading(true);
 
@@ -103,6 +115,7 @@ class AuthProvider with ChangeNotifier {
         username: username,
         email: email,
         password: password,
+        tipoUsuario: tipoUsuario,
       );
 
       if (result['success'] == true) {
@@ -153,69 +166,58 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// Verifica el estado de autenticación al iniciar la app
-  Future<void> _checkAuthStatus() async {
-    try {
-      final isLoggedIn = await _authService.isLoggedIn();
-
-      if (isLoggedIn) {
-        // Solo cargar desde cache local, NO verificar sesión en servidor
-        await _loadBasicUserData();
-      } else {
-        _user = null;
-      }
-    } catch (e) {
-      debugPrint('Error verificando estado de auth: $e');
-      _user = null;
-    }
-  }
-
-  /// Carga datos completos del usuario desde SharedPreferences
   Future<void> _loadBasicUserData() async {
     try {
+      final cached = await _authService.getCachedUser();
+      if (cached != null) {
+        _user = cached;
+        return;
+      }
+
       final userData = await _authService.getBasicUserData();
 
       if (userData['id'] != null && userData['username'] != null) {
-        _user = User(
-          id: userData['id']!,
-          username: userData['username']!,
-          tipoUsuario: userData['tipo_usuario'],
-          role: userData['role'],
-          status: userData['status'],
-          activo: userData['activo'] == 'true',
-          fechaRegistro: userData['fecha_registro'],
-          lastLogin: userData['last_login'],
-          nombreCompleto: userData['nombre_completo'],
-          nombreEmpresa: userData['nombre_empresa'],
-          email: userData['email'],
-          telefono: userData['telefono'],
-          direccion: userData['direccion'],
-          comuna: userData['comuna'],
-          region: userData['region'],
-        );
-        debugPrint(
-          '[AUTH_PROVIDER] Datos completos cargados: ${_user!.username}',
-        );
-        if (_user!.role != null) {
-          debugPrint('[AUTH_PROVIDER] Role: ${_user!.role}');
-        }
-        if (_user!.tipoUsuario != null) {
-          debugPrint('[AUTH_PROVIDER] Tipo: ${_user!.tipoUsuario}');
-        }
+        _user = User.fromJson({
+          'auth_user_id': userData['id'],
+          'username': userData['username'],
+          'tipo_usuario': userData['tipo_usuario'],
+          'role': userData['role'],
+          'status': userData['status'],
+          'activo': userData['activo'] == 'true',
+          'fecha_registro': userData['fecha_registro'],
+          'last_login': userData['last_login'],
+          'nombre_completo': userData['nombre_completo'],
+          'nombre_empresa': userData['nombre_empresa'],
+          'correo_principal': userData['email'],
+          'telefono_principal': userData['telefono'],
+          'direccion': userData['direccion'],
+          'comuna': userData['comuna'],
+          'region': userData['region'],
+          'ubicaciones': _decodeJsonList(userData['ubicaciones']),
+          'redes_sociales': _decodeJsonMap(userData['redes_sociales']),
+        });
       }
     } catch (e) {
       debugPrint('[AUTH_PROVIDER] Error cargando datos: $e');
     }
   }
 
-  /// Refresca los datos del usuario
+  /// Recarga el perfil desde Cloud (no solo cache local)
   Future<void> refreshUser() async {
-    if (!isAuthenticated) return;
-
     _setLoading(true);
-    // Solo recargar desde cache local, NO verificar sesión en servidor
-    await _loadBasicUserData();
-    _setLoading(false);
+    try {
+      final live = await _authService.fetchCurrentProfile();
+      if (live != null) {
+        _user = live;
+      } else {
+        await _loadBasicUserData();
+      }
+    } catch (e) {
+      debugPrint('[AUTH_PROVIDER] Error refrescando perfil: $e');
+      await _loadBasicUserData();
+    } finally {
+      _setLoading(false);
+    }
   }
 
   /// Obtiene el UUID segment del usuario actual (primeros 8 caracteres)
@@ -255,5 +257,23 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
     _isInitialized = false;
     notifyListeners();
+  }
+
+  dynamic _decodeJsonList(String? raw) {
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      return jsonDecode(raw);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  dynamic _decodeJsonMap(String? raw) {
+    if (raw == null || raw.isEmpty) return {};
+    try {
+      return jsonDecode(raw);
+    } catch (_) {
+      return {};
+    }
   }
 }

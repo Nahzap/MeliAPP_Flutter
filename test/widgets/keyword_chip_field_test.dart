@@ -56,7 +56,9 @@ void main() {
       expect(find.text('Valdivia'), findsOneWidget);
     });
 
-    testWidgets('el ejemplo del campo coincide con el de la web', (tester) async {
+    testWidgets('el ejemplo del campo coincide con el de la web', (
+      tester,
+    ) async {
       await pump(tester, chips: []);
 
       expect(find.text('Ej: ulmo, Valdivia, polen de tineo'), findsOneWidget);
@@ -141,7 +143,9 @@ void main() {
       expect(find.textContaining(':'), findsNothing);
     });
 
-    testWidgets('resume las coincidencias que exceden el máximo', (tester) async {
+    testWidgets('resume las coincidencias que exceden el máximo', (
+      tester,
+    ) async {
       await pumpPills(tester, [
         match('polen', 'a'),
         match('tipo_miel', 'b'),

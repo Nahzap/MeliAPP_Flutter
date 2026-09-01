@@ -62,7 +62,10 @@ class KeywordSearchService {
   /// Sugerencias y veredicto del parser para lo que el usuario lleva escrito.
   ///
   /// Con [query] vacío devuelve las palabras clave populares del catálogo.
-  Future<SuggestResult> suggest(String query, {CancelToken? cancelToken}) async {
+  Future<SuggestResult> suggest(
+    String query, {
+    CancelToken? cancelToken,
+  }) async {
     try {
       final response = await _client.get(
         ApiConfig.searchSuggestEndpoint,
@@ -119,7 +122,9 @@ class KeywordSearchService {
       if (data is Map) {
         return KeywordSearchResult.fromJson(Map<String, dynamic>.from(data));
       }
-      throw const SearchException('El servidor devolvió una respuesta inesperada.');
+      throw const SearchException(
+        'El servidor devolvió una respuesta inesperada.',
+      );
     } on DioException catch (e) {
       if (CancelToken.isCancel(e)) rethrow;
       debugPrint('[SEARCH] search falló: ${e.type}');

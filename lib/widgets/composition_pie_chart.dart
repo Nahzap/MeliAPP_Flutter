@@ -1,18 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../config/theme_config.dart';
+import 'species_catalog_table.dart';
 
-/// Widget de gráfico de torta para mostrar composición floral.
-///
-/// Usa fl_chart para visualizar porcentajes de especies.
+/// Figura (torta) más tabla numerada de composición o clases.
 class CompositionPieChart extends StatelessWidget {
   final Map<String, double> composicion;
   final double size;
+  final bool botanicalLabels;
+  final bool valuesArePercent;
+  final String? tableCaption;
 
   const CompositionPieChart({
     super.key,
     required this.composicion,
-    this.size = 240, // +20% (200 * 1.2 = 240)
+    this.size = 240,
+    this.botanicalLabels = false,
+    this.valuesArePercent = true,
+    this.tableCaption,
   });
+
+  static const List<Color> palette = [
+    Color(0xFFF59E0B),
+    Color(0xFF10B981),
+    Color(0xFF3B82F6),
+    Color(0xFFEF4444),
+    Color(0xFF8B5CF6),
+    Color(0xFFEC4899),
+    Color(0xFF14B8A6),
+    Color(0xFFF97316),
+    Color(0xFF06B6D4),
+    Color(0xFFA855F7),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +69,52 @@ class CompositionPieChart extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20),
-        // Leyenda abajo con ancho completo
-        _buildLegend(entries, context),
+        CompositionCatalogTable(
+          entries: entries,
+          swatches: palette,
+          botanicalLabels: botanicalLabels,
+          valuesArePercent: valuesArePercent,
+          caption: tableCaption,
+          footer: _totalFooter(context, entries),
+        ),
+      ],
+    );
+  }
+
+  Widget _totalFooter(
+    BuildContext context,
+    List<MapEntry<String, double>> entries,
+  ) {
+    final total = entries.fold<double>(0, (sum, e) => sum + e.value);
+    final percent = valuesArePercent;
+    final valid = !percent || (total - 100).abs() < 0.5;
+    final label = percent
+        ? '${total.toStringAsFixed(2)} %'
+        : '${total.round()}';
+    return Row(
+      children: [
+        Icon(
+          valid ? Icons.check_circle_outline : Icons.warning_amber_outlined,
+          size: 16,
+          color: valid ? AppTheme.success : AppTheme.warning,
+        ),
+        const SizedBox(width: 6),
+        Text(
+          percent ? 'Total' : 'Total (n)',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppTheme.slate700,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: valid ? AppTheme.slate800 : AppTheme.warning,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
       ],
     );
   }
@@ -59,17 +122,22 @@ class CompositionPieChart extends StatelessWidget {
   List<PieChartSectionData> _buildSections(
     List<MapEntry<String, double>> entries,
   ) {
-    final colors = _getColors();
+    final total = entries.fold<double>(0, (sum, e) => sum + e.value);
 
     return entries.asMap().entries.map((entry) {
       final index = entry.key;
       final data = entry.value;
-      final color = colors[index % colors.length];
-      final isLarge = data.value > 10;
+      final color = palette[index % palette.length];
+      final share = total <= 0 ? 0.0 : data.value / total;
+      final isLarge = share > 0.12;
 
       return PieChartSectionData(
         value: data.value,
-        title: isLarge ? '${data.value.toStringAsFixed(1)}%' : '',
+        title: isLarge
+            ? (valuesArePercent
+                  ? '${data.value.toStringAsFixed(1)}%'
+                  : '${data.value.round()}')
+            : '',
         color: color,
         radius: size * 0.25,
         titleStyle: const TextStyle(
@@ -81,104 +149,5 @@ class CompositionPieChart extends StatelessWidget {
         titlePositionPercentageOffset: 0.6,
       );
     }).toList();
-  }
-
-  Widget _buildLegend(
-    List<MapEntry<String, double>> entries,
-    BuildContext context,
-  ) {
-    final colors = _getColors();
-
-    return Column(
-      children: entries.asMap().entries.map((entry) {
-        final index = entry.key;
-        final data = entry.value;
-        final color = colors[index % colors.length];
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: _LegendItem(color: color, label: data.key, value: data.value),
-        );
-      }).toList(),
-    );
-  }
-
-  List<Color> _getColors() {
-    return [
-      const Color(0xFFF59E0B), // Amber
-      const Color(0xFF10B981), // Emerald
-      const Color(0xFF3B82F6), // Blue
-      const Color(0xFFEF4444), // Red
-      const Color(0xFF8B5CF6), // Purple
-      const Color(0xFFEC4899), // Pink
-      const Color(0xFF14B8A6), // Teal
-      const Color(0xFFF97316), // Orange
-      const Color(0xFF06B6D4), // Cyan
-      const Color(0xFFA855F7), // Violet
-    ];
-  }
-}
-
-class _LegendItem extends StatelessWidget {
-  final Color color;
-  final String label;
-  final double value;
-
-  const _LegendItem({
-    required this.color,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[200]!, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          Container(
-            width: 18,
-            height: 18,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.3),
-                  blurRadius: 4,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            '${value.toStringAsFixed(1)}%',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

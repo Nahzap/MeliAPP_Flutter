@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/google_sign_in_button.dart';
 
 /// Pantalla de login para autenticación de usuarios
 class LoginScreen extends StatefulWidget {
@@ -53,7 +54,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       // Botón login
                       _buildLoginButton(authProvider),
-                      const SizedBox(height: 8),
+                      if (kShowGoogleOAuth) ...[
+                        const SizedBox(height: 16),
+                        _buildSeparator(),
+                        const SizedBox(height: 16),
+                        GoogleSignInButton(
+                          loading: authProvider.isLoading,
+                          onPressed: () => _handleGoogleLogin(authProvider),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
 
                       // Link de recuperación de contraseña
                       TextButton(
@@ -71,11 +81,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Mensaje de error
                       if (authProvider.errorMessage != null)
                         _buildErrorMessage(authProvider.errorMessage!),
-
-                      const SizedBox(height: 24),
-
-                      // Información de conexión
-                      _buildConnectionInfo(),
                     ],
                   ),
                 );
@@ -251,6 +256,19 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _buildSeparator() {
+    return Row(
+      children: [
+        Expanded(child: Divider(color: Colors.grey[300])),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text('o', style: TextStyle(color: Colors.grey[600])),
+        ),
+        Expanded(child: Divider(color: Colors.grey[300])),
+      ],
+    );
+  }
+
   Widget _buildErrorMessage(String message) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -274,54 +292,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildConnectionInfo() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEF3C7), // amber-50
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFFDE68A)), // amber-200
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.info_outline,
-                color: Theme.of(context).colorScheme.primary,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Información de Conexión',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Conectando a: meli-app-cloud.vercel.app',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
-              fontSize: 12,
-            ),
-          ),
-          Text(
-            'API REST con autenticación Flask + Supabase',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _handleLogin() async {
     if (_formKey.currentState?.validate() ?? false) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -334,6 +304,13 @@ class _LoginScreenState extends State<LoginScreen> {
       if (success && mounted) {
         Navigator.pushReplacementNamed(context, '/home');
       }
+    }
+  }
+
+  Future<void> _handleGoogleLogin(AuthProvider authProvider) async {
+    final success = await authProvider.loginWithGoogle();
+    if (success && mounted) {
+      Navigator.pushReplacementNamed(context, '/home');
     }
   }
 }

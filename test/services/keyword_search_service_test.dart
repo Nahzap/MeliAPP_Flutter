@@ -197,11 +197,15 @@ void main() {
       expect(resultado.ok, isTrue);
       expect(resultado.results.single.nombre, 'Paula Gonzalez');
       expect(resultado.results.single.ubicacion, 'Futrono, Los Rios');
-      expect(resultado.results.single.matches.single.display, 'Polen: Ulmo (62%)');
+      expect(
+        resultado.results.single.matches.single.display,
+        'Polen: Ulmo (62%)',
+      );
     });
 
     test('sin conexión entrega un mensaje accionable', () async {
-      final adapter = _StubAdapter()..failWith = DioExceptionType.connectionError;
+      final adapter = _StubAdapter()
+        ..failWith = DioExceptionType.connectionError;
 
       expect(
         () => _serviceWith(adapter).search([_chipUlmo]),
@@ -216,7 +220,8 @@ void main() {
     });
 
     test('un tiempo de espera agotado se explica al usuario', () async {
-      final adapter = _StubAdapter()..failWith = DioExceptionType.receiveTimeout;
+      final adapter = _StubAdapter()
+        ..failWith = DioExceptionType.receiveTimeout;
 
       expect(
         () => _serviceWith(adapter).suggest('ulmo'),
@@ -230,23 +235,26 @@ void main() {
       );
     });
 
-    test('un 503 del motor no se convierte en excepción de transporte', () async {
-      final adapter = _StubAdapter(
-        status: 503,
-        body: {
-          'ok': false,
-          'query_type': 'error',
-          'reason': 'No se pudo completar la búsqueda.',
-          'results': [],
-        },
-      );
+    test(
+      'un 503 del motor no se convierte en excepción de transporte',
+      () async {
+        final adapter = _StubAdapter(
+          status: 503,
+          body: {
+            'ok': false,
+            'query_type': 'error',
+            'reason': 'No se pudo completar la búsqueda.',
+            'results': [],
+          },
+        );
 
-      // 5xx sí es fallo de transporte: debe llegar como SearchException.
-      expect(
-        () => _serviceWith(adapter).search([_chipUlmo]),
-        throwsA(isA<SearchException>()),
-      );
-    });
+        // 5xx sí es fallo de transporte: debe llegar como SearchException.
+        expect(
+          () => _serviceWith(adapter).search([_chipUlmo]),
+          throwsA(isA<SearchException>()),
+        );
+      },
+    );
   });
 
   test('el tope de palabras clave coincide con el de Cloud', () {

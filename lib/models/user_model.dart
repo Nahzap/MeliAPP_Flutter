@@ -1,23 +1,26 @@
-/// Modelo de usuario completo con datos de usuarios + info_contacto
-class User {
-  // Campos de la tabla usuarios
-  final String id; // auth_user_id (UUID)
-  final String username; // username
-  final String? tipoUsuario; // tipo_usuario
-  final String? role; // role
-  final String? status; // status
-  final bool? activo; // activo
-  final String? fechaRegistro; // fecha_registro
-  final String? lastLogin; // last_login
+import 'ubicacion_model.dart';
 
-  // Campos de la tabla info_contacto
-  final String? nombreCompleto; // nombre_completo
-  final String? nombreEmpresa; // nombre_empresa
-  final String? email; // correo_principal
-  final String? telefono; // telefono_principal
-  final String? direccion; // direccion
-  final String? comuna; // comuna
-  final String? region; // region
+/// Modelo de usuario completo con datos de usuarios + info_contacto.
+class User {
+  final String id;
+  final String username;
+  final String? tipoUsuario;
+  final String? role;
+  final String? status;
+  final bool? activo;
+  final String? fechaRegistro;
+  final String? lastLogin;
+  final String? nombreCompleto;
+  final String? nombreEmpresa;
+  final String? email;
+  final String? telefono;
+  final String? direccion;
+  final String? comuna;
+  final String? region;
+  final String? rut;
+  final String? registroSag;
+  final List<Ubicacion> ubicaciones;
+  final Map<String, dynamic> redesSociales;
 
   User({
     required this.id,
@@ -35,27 +38,48 @@ class User {
     this.direccion,
     this.comuna,
     this.region,
+    this.rut,
+    this.registroSag,
+    this.ubicaciones = const [],
+    this.redesSociales = const {},
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    final nestedUser = json['user'];
+    final source = nestedUser is Map<String, dynamic> ? nestedUser : json;
+
     return User(
-      // Datos de tabla usuarios
-      id: json['auth_user_id'] as String? ?? json['id'] as String,
-      username: json['username'] as String,
-      tipoUsuario: json['tipo_usuario'] as String?,
-      role: json['role'] as String?,
-      status: json['status'] as String?,
-      activo: json['activo'] as bool?,
-      fechaRegistro: json['fecha_registro'] as String?,
-      lastLogin: json['last_login'] as String?,
-      // Datos de tabla info_contacto
-      nombreCompleto: json['nombre_completo'] as String?,
-      nombreEmpresa: json['nombre_empresa'] as String?,
-      email: json['correo_principal'] as String? ?? json['email'] as String?,
-      telefono: json['telefono_principal'] as String?,
-      direccion: json['direccion'] as String?,
-      comuna: json['comuna'] as String?,
-      region: json['region'] as String?,
+      id:
+          source['auth_user_id'] as String? ??
+          source['id'] as String? ??
+          json['auth_user_id'] as String? ??
+          json['id'] as String? ??
+          '',
+      username: (source['username'] ?? json['username'] ?? '') as String,
+      tipoUsuario: source['tipo_usuario'] as String?,
+      role: source['role'] as String?,
+      status: source['status'] as String?,
+      activo: source['activo'] as bool?,
+      fechaRegistro: source['fecha_registro'] as String?,
+      lastLogin: source['last_login'] as String?,
+      nombreCompleto: source['nombre_completo'] as String?,
+      nombreEmpresa: source['nombre_empresa'] as String?,
+      email:
+          source['correo_principal'] as String? ?? source['email'] as String?,
+      telefono:
+          source['telefono_principal'] as String? ??
+          source['telefono'] as String?,
+      direccion: source['direccion'] as String?,
+      comuna: source['comuna'] as String?,
+      region: source['region'] as String?,
+      rut: source['rut'] as String?,
+      registroSag: source['registro_sag'] as String?,
+      ubicaciones: _parseUbicaciones(
+        source['ubicaciones'] ?? json['ubicaciones'],
+      ),
+      redesSociales: _parseRedes(
+        source['redes_sociales'] ?? json['redes_sociales'],
+      ),
     );
   }
 
@@ -76,7 +100,93 @@ class User {
       'direccion': direccion,
       'comuna': comuna,
       'region': region,
+      'rut': rut,
+      'registro_sag': registroSag,
+      'ubicaciones': ubicaciones.map((u) => u.toJson()).toList(),
+      'redes_sociales': redesSociales,
     };
+  }
+
+  String get displayName =>
+      (nombreCompleto != null && nombreCompleto!.trim().isNotEmpty)
+      ? nombreCompleto!.trim()
+      : username;
+
+  /// Rol ocupacional único (evita APICULTOR + apicultor).
+  String? get occupationLabel {
+    final labels = <String>[];
+    for (final raw in [role, tipoUsuario]) {
+      final pretty = _prettyLabel(raw);
+      if (pretty == null) continue;
+      if (_genericIdentityTokens.contains(_normalize(pretty))) continue;
+      if (labels.any((item) => _normalize(item) == _normalize(pretty))) {
+        continue;
+      }
+      labels.add(pretty);
+    }
+    return labels.isEmpty ? null : labels.first;
+  }
+
+  bool get hasDistinctUsername {
+    final handle = username.trim();
+    if (handle.isEmpty) return false;
+    return _normalize(handle) != _normalize(displayName);
+  }
+
+  String? get locationLabel {
+    final parts = [
+      comuna,
+      region,
+    ].whereType<String>().map((e) => e.trim()).where((e) => e.isNotEmpty);
+    if (parts.isEmpty) return null;
+    return parts.join(', ');
+  }
+
+  bool get isActive {
+    final st = status?.trim().toLowerCase();
+    if (st == 'active' || st == 'activo') return true;
+    return activo == true;
+  }
+
+  Map<String, String> get redesConValor {
+    final result = <String, String>{};
+    redesSociales.forEach((key, value) {
+      if (value == null) return;
+      final text = value.toString().trim();
+      if (text.isNotEmpty) result[key] = text;
+    });
+    return result;
+  }
+
+  static List<Ubicacion> _parseUbicaciones(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => Ubicacion.fromJson(Map<String, dynamic>.from(e)))
+        .where((u) => u.id.isNotEmpty || u.nombre.isNotEmpty)
+        .toList();
+  }
+
+  static Map<String, dynamic> _parseRedes(dynamic raw) {
+    if (raw is Map) {
+      return Map<String, dynamic>.from(raw);
+    }
+    return const {};
+  }
+
+  static const _genericIdentityTokens = {'user', 'usuario', 'active', 'activo'};
+
+  static String _normalize(String value) {
+    return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  static String? _prettyLabel(String? raw) {
+    final text = raw?.trim() ?? '';
+    if (text.isEmpty) return null;
+    if (text == text.toUpperCase() || text == text.toLowerCase()) {
+      return '${text[0].toUpperCase()}${text.substring(1).toLowerCase()}';
+    }
+    return text;
   }
 
   @override

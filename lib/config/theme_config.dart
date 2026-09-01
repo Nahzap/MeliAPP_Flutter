@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 /// Tema centralizado que replica el estilo de MeliAPP Cloud Web
 /// Colores y estilos consistentes con la plataforma web
 class AppTheme {
-  // Colores primarios (amber)
+  // Colores primarios (amber / miel)
   static const Color primary = Color(0xFFF59E0B); // amber-500
   static const Color primaryDark = Color(0xFFD97706); // amber-600
   static const Color primaryLight = Color(0xFFFBBF24); // amber-400
+  static const Color amber50 = Color(0xFFFFFBEB);
+  static const Color amber100 = Color(0xFFFEF3C7);
+  static const Color amber200 = Color(0xFFFDE68A);
 
   // Colores secundarios (emerald)
   static const Color secondary = Color(0xFF10B981); // emerald-500

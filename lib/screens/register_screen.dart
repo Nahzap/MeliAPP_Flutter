@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../config/self_service_tipos.dart';
+import '../config/register_messages.dart';
 import '../providers/auth_provider.dart';
+import '../services/auth_service.dart';
+import '../widgets/google_sign_in_button.dart';
 
 /// Pantalla de registro de nuevos usuarios
 class RegisterScreen extends StatefulWidget {
@@ -14,6 +18,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _confirmEmailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -21,11 +26,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
   String? _errorMessage;
+  String? _tipoUsuario;
+  bool _canResend = false;
 
   @override
   void dispose() {
     _usernameController.dispose();
     _emailController.dispose();
+    _confirmEmailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -39,6 +47,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _canResend = false;
     });
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -48,16 +57,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
         username: _usernameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        tipoUsuario: _tipoUsuario!,
       );
 
       if (mounted) {
         if (result['success'] == true) {
-          // Registro exitoso, navegar a home
-          Navigator.pushReplacementNamed(context, '/home');
+          final message = RegisterMessages.fromResponse(result);
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message)));
+          Navigator.pushReplacementNamed(context, '/login');
         } else {
-          // Mostrar error
           setState(() {
-            _errorMessage = result['error'] ?? 'Error al registrar usuario';
+            _errorMessage = RegisterMessages.fromResponse(result);
+            _canResend = RegisterMessages.canResend(result);
             _isLoading = false;
           });
         }
@@ -70,6 +83,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
       }
     }
+  }
+
+  Future<void> _handleResend() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      setState(() => _errorMessage = 'Ingresa tu correo para reenviar');
+      return;
+    }
+    setState(() => _isLoading = true);
+    final result = await AuthService().resendConfirmation(email);
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    final message =
+        result['message']?.toString() ?? RegisterMessages.pendingEmail;
+    if (result['success'] == true) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } else {
+      setState(() => _errorMessage = message);
+    }
+  }
+
+  Future<void> _handleGoogle() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await authProvider.loginWithGoogle();
+    if (!mounted) return;
+    if (success) {
+      Navigator.pushReplacementNamed(context, '/home');
+      return;
+    }
+    setState(() {
+      _isLoading = false;
+      _errorMessage =
+          authProvider.errorMessage ?? 'No se pudo continuar con Google';
+    });
   }
 
   @override
@@ -172,6 +225,63 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 16),
 
+                TextFormField(
+                  controller: _confirmEmailController,
+                  decoration: InputDecoration(
+                    labelText: 'Confirmar email',
+                    hintText: 'ejemplo@correo.com',
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Confirma tu email';
+                    }
+                    if (value.trim() != _emailController.text.trim()) {
+                      return 'Los emails no coinciden';
+                    }
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                DropdownButtonFormField<String>(
+                  key: ValueKey(_tipoUsuario ?? 'tipo'),
+                  initialValue: _tipoUsuario,
+                  decoration: InputDecoration(
+                    labelText: 'Tipo de usuario',
+                    prefixIcon: const Icon(Icons.badge_outlined),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                  ),
+                  items: [
+                    for (final tipo in kSelfServiceTipos)
+                      DropdownMenuItem(
+                        value: tipo.value,
+                        child: Text(tipo.label),
+                      ),
+                  ],
+                  onChanged: (value) => setState(() => _tipoUsuario = value),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Selecciona un tipo de usuario';
+                    }
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
                 // Campo Contraseña
                 TextFormField(
                   controller: _passwordController,
@@ -260,23 +370,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.red[200]!),
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.error_outline,
-                          color: Colors.red[700],
-                          size: 20,
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red[700],
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _errorMessage!,
+                                style: TextStyle(
+                                  color: Colors.red[900],
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _errorMessage!,
-                            style: TextStyle(
-                              color: Colors.red[900],
-                              fontSize: 13,
+                        if (_canResend)
+                          TextButton(
+                            onPressed: _isLoading ? null : _handleResend,
+                            child: const Text(
+                              'Reenviar correo de confirmación',
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -308,6 +430,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                 ),
+
+                if (kShowGoogleOAuth) ...[
+                  const SizedBox(height: 16),
+                  GoogleSignInButton(
+                    loading: _isLoading,
+                    label: 'Continuar con Google',
+                    onPressed: _handleGoogle,
+                  ),
+                ],
 
                 const SizedBox(height: 16),
 

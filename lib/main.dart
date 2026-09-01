@@ -4,17 +4,18 @@ import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/profile_view_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/lotes/lotes_list_screen.dart';
 import 'screens/lotes/lote_detail_screen.dart';
 import 'services/api_service.dart';
+import 'services/taxa_service.dart';
 import 'config/theme_config.dart';
 
-void main() {
-  // Inicializar servicios antes de ejecutar la app
-  ApiService().initialize();
-
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ApiService().initialize();
   runApp(const MeliApp());
 }
 
@@ -24,9 +25,12 @@ class MeliApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => TaxaService()..ensureLoaded()),
+      ],
       child: MaterialApp(
-        title: 'MeliAPP Cloud',
+        title: 'MeliAPP',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         home: const AuthWrapper(),
@@ -36,6 +40,13 @@ class MeliApp extends StatelessWidget {
             final loteId = settings.arguments as String;
             return MaterialPageRoute(
               builder: (context) => LoteDetailScreen(loteId: loteId),
+            );
+          }
+
+          if (settings.name == '/profile') {
+            final userId = settings.arguments as String?;
+            return MaterialPageRoute(
+              builder: (context) => ProfileViewScreen(userId: userId),
             );
           }
 
